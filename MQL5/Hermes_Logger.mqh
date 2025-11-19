@@ -7,6 +7,9 @@
 #property version   "2.50"
 #property strict
 
+#ifndef HERMES_LOGGER_MQH
+#define HERMES_LOGGER_MQH
+
 #include "Hermes_Config.mqh"
 
 //+------------------------------------------------------------------+
@@ -440,3 +443,5 @@ void CheckSHAPTrigger() {
 }
 
 //+------------------------------------------------------------------+
+
+#endif // HERMES_LOGGER_MQH

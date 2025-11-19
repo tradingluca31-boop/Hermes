@@ -7,6 +7,9 @@
 #property version   "2.50"
 #property strict
 
+#ifndef HERMES_INDICATORS_MQH
+#define HERMES_INDICATORS_MQH
+
 #include "Hermes_Config.mqh"
 
 //+------------------------------------------------------------------+
@@ -810,3 +813,5 @@ void ReleaseIndicators() {
 }
 
 //+------------------------------------------------------------------+
+
+#endif // HERMES_INDICATORS_MQH

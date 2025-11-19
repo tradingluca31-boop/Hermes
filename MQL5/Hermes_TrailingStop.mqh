@@ -7,6 +7,9 @@
 #property version   "2.50"
 #property strict
 
+#ifndef HERMES_TRAILINGSTOP_MQH
+#define HERMES_TRAILINGSTOP_MQH
+
 #include "Hermes_Config.mqh"
 
 //+------------------------------------------------------------------+
@@ -426,3 +429,5 @@ void InitializePositionInfo(ulong ticket, int direction, double entry_price,
 }
 
 //+------------------------------------------------------------------+
+
+#endif // HERMES_TRAILINGSTOP_MQH

@@ -6,6 +6,9 @@
 #property version   "2.50"
 #property strict
 
+#ifndef HERMES_SESSIONMANAGER_MQH
+#define HERMES_SESSIONMANAGER_MQH
+
 #include "Hermes_Config.mqh"
 
 //+------------------------------------------------------------------+
@@ -478,3 +481,5 @@ void PrintSessionInfo() {
 }
 
 //+------------------------------------------------------------------+
+
+#endif // HERMES_SESSIONMANAGER_MQH

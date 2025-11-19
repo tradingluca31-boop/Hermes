@@ -7,6 +7,9 @@
 #property version   "2.50"
 #property strict
 
+#ifndef HERMES_RISKMANAGER_MQH
+#define HERMES_RISKMANAGER_MQH
+
 #include "Hermes_Config.mqh"
 
 //+------------------------------------------------------------------+
@@ -431,3 +434,5 @@ void UpdateTradeStatistics(double r_multiple) {
 }
 
 //+------------------------------------------------------------------+
+
+#endif // HERMES_RISKMANAGER_MQH
