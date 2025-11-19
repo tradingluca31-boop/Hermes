@@ -394,8 +394,8 @@ bool Indicator_VWAP_M15(int direction) {
     double typical_price = (high[0] + low[0] + close[0]) / 3.0;
 
     // Cumul
-    g_VWAP_CumulPV += typical_price * volume[0];
-    g_VWAP_CumulVol += volume[0];
+    g_VWAP_CumulPV += typical_price * (double)volume[0];
+    g_VWAP_CumulVol += (double)volume[0];
 
     double vwap = (g_VWAP_CumulVol > 0) ? g_VWAP_CumulPV / g_VWAP_CumulVol : close[0];
 
@@ -431,18 +431,18 @@ bool Indicator_OrderFlow_M15(int direction) {
         double delta_price = close[i] - close[i+1];
 
         if(delta_price > 0) {  // Uptick
-            delta_cumul += volume[i];
+            delta_cumul += (double)volume[i];
         }
         else if(delta_price < 0) {  // Downtick
-            delta_cumul -= volume[i];
+            delta_cumul -= (double)volume[i];
         }
 
         // Delta précédent (pour détecter croissance)
         if(i > 0) {
             if(close[i+1] > close[i+2])
-                delta_prev_cumul += volume[i+1];
+                delta_prev_cumul += (double)volume[i+1];
             else if(close[i+1] < close[i+2])
-                delta_prev_cumul -= volume[i+1];
+                delta_prev_cumul -= (double)volume[i+1];
         }
     }
 
