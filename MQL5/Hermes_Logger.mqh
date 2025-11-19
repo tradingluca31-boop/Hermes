@@ -92,7 +92,8 @@ void LogTradeExit(double exit_price, double r_multiple) {
     string line = "";
 
     // trade_id
-    line += IntegerToString(g_TotalTrades) + ",";
+    line += IntegerToString(g_TotalTrades);
+    line += ",";
 
     // entry_date, entry_time
     MqlDateTime dt;
@@ -101,40 +102,53 @@ void LogTradeExit(double exit_price, double r_multiple) {
     line += StringFormat("%02d:%02d:%02d,", dt.hour, dt.min, dt.sec);
 
     // direction
-    line += (g_CurrentPosition.direction == 1 ? "BUY" : "SELL") + ",";
+    line += (g_CurrentPosition.direction == 1 ? "BUY" : "SELL");
+    line += ",";
 
     // entry_price
-    line += DoubleToString(g_CurrentPosition.entry_price, _Digits) + ",";
+    line += DoubleToString(g_CurrentPosition.entry_price, _Digits);
+    line += ",";
 
     // sl
-    line += DoubleToString(g_CurrentPosition.initial_sl, _Digits) + ",";
+    line += DoubleToString(g_CurrentPosition.initial_sl, _Digits);
+    line += ",";
 
     // exit_price
-    line += DoubleToString(exit_price, _Digits) + ",";
+    line += DoubleToString(exit_price, _Digits);
+    line += ",";
 
     // result
-    line += (r_multiple > 0 ? "WIN" : "LOSS") + ",";
+    line += (r_multiple > 0 ? "WIN" : "LOSS");
+    line += ",";
 
     // r_multiple
-    line += DoubleToString(r_multiple, 2) + ",";
+    line += DoubleToString(r_multiple, 2);
+    line += ",";
 
     // duration_hours
     double duration_hours = (TimeCurrent() - g_CurrentPosition.entry_time) / 3600.0;
-    line += DoubleToString(duration_hours, 1) + ",";
+    line += DoubleToString(duration_hours, 1);
+    line += ",";
 
     // 21 indicateurs (1/0)
     for(int i = 0; i < NUM_INDICATORS_TOTAL; i++) {
-        line += IntegerToString(g_CurrentPosition.indicators_state[i]) + ",";
+        line += IntegerToString(g_CurrentPosition.indicators_state[i]);
+        line += ",";
     }
 
     // votes
-    line += IntegerToString(g_CurrentPosition.votes_h4) + ",";
-    line += IntegerToString(g_CurrentPosition.votes_h1) + ",";
-    line += IntegerToString(g_CurrentPosition.votes_m15) + ",";
-    line += IntegerToString(g_CurrentPosition.votes_macro) + ",";
+    line += IntegerToString(g_CurrentPosition.votes_h4);
+    line += ",";
+    line += IntegerToString(g_CurrentPosition.votes_h1);
+    line += ",";
+    line += IntegerToString(g_CurrentPosition.votes_m15);
+    line += ",";
+    line += IntegerToString(g_CurrentPosition.votes_macro);
+    line += ",";
     line += IntegerToString(g_CurrentPosition.votes_total);
 
-    FileWriteString(file_handle, line + "\n");
+    FileWriteString(file_handle, line);
+    FileWriteString(file_handle, "\n");
     FileClose(file_handle);
 
     Print("✅ Trade logged to CSV: ", CSV_Trades_Detailed);
@@ -321,23 +335,38 @@ void RunSHAPAnalysis() {
 
         // Ligne CSV
         string line = "";
-        line += TimeToString(TimeCurrent(), TIME_DATE) + ",";
-        line += IntegerToString(total_trades_analyzed) + ",";
-        line += stats[i].name + ",";
-        line += DoubleToString(Indicator_Weights[i], 1) + ",";
-        line += IntegerToString(stats[i].participated_count) + ",";
-        line += DoubleToString(participated_percent, 1) + ",";
-        line += IntegerToString(stats[i].win_count) + ",";
-        line += IntegerToString(stats[i].loss_count) + ",";
-        line += DoubleToString(win_rate * 100, 1) + ",";
-        line += DoubleToString(avg_r_present, 2) + ",";
-        line += DoubleToString(avg_r_absent, 2) + ",";
-        line += DoubleToString(contribution_delta, 2) + ",";
-        line += DoubleToString(shap_value, 3) + ",";
-        line += DoubleToString(recommended_weight, 1) + ",";
+        line += TimeToString(TimeCurrent(), TIME_DATE);
+        line += ",";
+        line += IntegerToString(total_trades_analyzed);
+        line += ",";
+        line += stats[i].name;
+        line += ",";
+        line += DoubleToString(Indicator_Weights[i], 1);
+        line += ",";
+        line += IntegerToString(stats[i].participated_count);
+        line += ",";
+        line += DoubleToString(participated_percent, 1);
+        line += ",";
+        line += IntegerToString(stats[i].win_count);
+        line += ",";
+        line += IntegerToString(stats[i].loss_count);
+        line += ",";
+        line += DoubleToString(win_rate * 100, 1);
+        line += ",";
+        line += DoubleToString(avg_r_present, 2);
+        line += ",";
+        line += DoubleToString(avg_r_absent, 2);
+        line += ",";
+        line += DoubleToString(contribution_delta, 2);
+        line += ",";
+        line += DoubleToString(shap_value, 3);
+        line += ",";
+        line += DoubleToString(recommended_weight, 1);
+        line += ",";
         line += status;
 
-        FileWriteString(file_shap, line + "\n");
+        FileWriteString(file_shap, line);
+        FileWriteString(file_shap, "\n");
     }
 
     FileClose(file_shap);
@@ -370,11 +399,17 @@ void GenerateSummaryCSV(int total_trades) {
     FileWriteString(file_handle, "metric,value\n");
 
     // Métriques trading
-    FileWriteString(file_handle, "total_trades_analyzed," + IntegerToString(total_trades) + "\n");
+    string line1 = "total_trades_analyzed,";
+    line1 += IntegerToString(total_trades);
+    line1 += "\n";
+    FileWriteString(file_handle, line1);
 
     double overall_win_rate = (g_TotalTrades > 0) ?
                               (double)g_TotalWins / g_TotalTrades * 100.0 : 0.0;
-    FileWriteString(file_handle, "overall_win_rate," + DoubleToString(overall_win_rate, 1) + "%\n");
+    string line2 = "overall_win_rate,";
+    line2 += DoubleToString(overall_win_rate, 1);
+    line2 += "%\n";
+    FileWriteString(file_handle, line2);
 
     // TODO: Calculer avg_r et profit_factor depuis CSV
 
