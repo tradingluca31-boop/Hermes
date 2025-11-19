@@ -1,0 +1,39 @@
+# Fichiers compilés MQL5
+*.ex5
+*.exp
+
+# Logs et fichiers générés
+logs/*.csv
+logs/*.txt
+*.log
+
+# Fichiers temporaires
+*.tmp
+*.bak
+*~
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Données privées (à ne pas commit)
+data/cot_data.csv
+data/macro_events.csv
+
+# Résultats backtest (trop gros)
+backtest/*.html
+backtest/*.gif
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
