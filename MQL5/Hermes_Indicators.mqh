@@ -193,7 +193,9 @@ bool Indicator_MACD_H1(int direction) {
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 8: RSI H1                                             |
-//| Zone de force optimale (BUY: 50-70, SELL: 30-50)                 |
+//| INSTITUTIONAL VERSION: Wider zones for trend capture             |
+//| BUY: RSI > 40 (bullish lean, catches trends + recoveries)        |
+//| SELL: RSI < 60 (bearish lean, catches trends + rejections)       |
 //+------------------------------------------------------------------+
 bool Indicator_RSI_H1(int direction) {
     double rsi[];
@@ -202,10 +204,12 @@ bool Indicator_RSI_H1(int direction) {
     if(CopyBuffer(h_RSI_H1, 0, 0, 2, rsi) <= 0) return false;
 
     if(direction == 1) {  // BUY
-        return (rsi[0] >= 50.0 && rsi[0] <= 70.0);
+        // WIDENED: Was 50-70, now >40 (captures trending + oversold recovery)
+        return (rsi[0] > 40.0);
     }
     else if(direction == -1) {  // SELL
-        return (rsi[0] >= 30.0 && rsi[0] <= 50.0);
+        // WIDENED: Was 30-50, now <60 (captures trending + overbought rejection)
+        return (rsi[0] < 60.0);
     }
 
     return false;
@@ -235,7 +239,9 @@ bool Indicator_SAR_H1(int direction) {
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 10: Stochastic H1                                     |
-//| Momentum court terme (14/3/3)                                    |
+//| INSTITUTIONAL VERSION: Trending + Cross + Extremes               |
+//| BUY: %K > %D (trending bullish) OR oversold bounce (<20)         |
+//| SELL: %K < %D (trending bearish) OR overbought rejection (>80)   |
 //+------------------------------------------------------------------+
 bool Indicator_Stochastic_H1(int direction) {
     double stoch_main[], stoch_signal[];
@@ -246,14 +252,17 @@ bool Indicator_Stochastic_H1(int direction) {
     if(CopyBuffer(h_Stoch_H1, 0, 0, 3, stoch_main) <= 0) return false;
     if(CopyBuffer(h_Stoch_H1, 1, 0, 3, stoch_signal) <= 0) return false;
 
-    // Détection cross
-    if(direction == 1) {  // BUY - Cross up
-        return (stoch_main[0] > stoch_signal[0] &&
-                stoch_main[1] <= stoch_signal[1]);
+    if(direction == 1) {  // BUY
+        // WIDENED: Accept trending (K>D) + oversold bounces
+        bool trending_bullish = (stoch_main[0] > stoch_signal[0]);
+        bool oversold_bounce = (stoch_main[0] < 20.0 && stoch_main[0] > stoch_main[1]);
+        return (trending_bullish || oversold_bounce);
     }
-    else if(direction == -1) {  // SELL - Cross down
-        return (stoch_main[0] < stoch_signal[0] &&
-                stoch_main[1] >= stoch_signal[1]);
+    else if(direction == -1) {  // SELL
+        // WIDENED: Accept trending (K<D) + overbought rejections
+        bool trending_bearish = (stoch_main[0] < stoch_signal[0]);
+        bool overbought_reject = (stoch_main[0] > 80.0 && stoch_main[0] < stoch_main[1]);
+        return (trending_bearish || overbought_reject);
     }
 
     return false;
@@ -529,8 +538,16 @@ bool Indicator_EURUSD_Corr_M15(int direction) {
 
     // Copy EURUSD M15 close
     if(CopyClose("EURUSD", TF_TIMING, 0, 3, close_eurusd) <= 0) {
-        // Si EURUSD pas disponible, return false (neutral)
-        return false;
+        // ⚠️ OPTIONAL INDICATOR: EURUSD data not available
+        // Returns FALSE (= 0 votes) which is NEUTRAL in progressive counting
+        // This allows trading even without EURUSD correlation data
+        //
+        // TO ADD EURUSD DATA:
+        // 1. In MetaTrader 5: View → Market Watch (Ctrl+M)
+        // 2. Right-click → Symbols → Forex → EUR → EURUSD → Show
+        // 3. Right-click EURUSD → Charts → Refresh historical data
+        // 4. Restart backtest
+        return false;  // Neutral vote (doesn't block trades)
     }
 
     // Direction EURUSD

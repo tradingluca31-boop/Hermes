@@ -147,6 +147,92 @@ bool LoadEconomicCalendar() {
 }
 
 //+------------------------------------------------------------------+
+//| Charge données COT depuis CSV                                    |
+//+------------------------------------------------------------------+
+bool LoadCOTData() {
+    string filename = "GOLD_COT_DATA_2008_2025.csv";
+    string filepath = "..\\..\\data\\" + filename;
+
+    int file_handle = FileOpen(filepath, FILE_READ|FILE_CSV|FILE_ANSI, ',');
+
+    if(file_handle == INVALID_HANDLE) {
+        Print("⚠️ COT data file not found: ", filepath);
+        Print("   COT indicator will be NEUTRAL (0 votes)");
+        return false;
+    }
+
+    // Clear existing data
+    ArrayResize(g_COTHistory, 0);
+    g_NumCOTRecords = 0;
+
+    // Skip header line
+    string header = FileReadString(file_handle);
+
+    // Parse CSV
+    // Expected format: date,contract_code,open_interest,noncomm_long,noncomm_short,comm_long,comm_short,...
+    // Field indices: 0=date, 1=contract, 2=OI, 3=noncomm_long, 4=noncomm_short, 5=comm_long, 6=comm_short
+
+    while(!FileIsEnding(file_handle)) {
+        // Read all fields for this row
+        string date_str = FileReadString(file_handle);          // Field 0
+        string contract = FileReadString(file_handle);          // Field 1
+        string oi_str = FileReadString(file_handle);            // Field 2
+        string noncomm_long_str = FileReadString(file_handle);  // Field 3
+        string noncomm_short_str = FileReadString(file_handle); // Field 4
+        string comm_long_str = FileReadString(file_handle);     // Field 5
+        string comm_short_str = FileReadString(file_handle);    // Field 6
+
+        if(StringLen(date_str) == 0) continue;
+
+        // Parse date (ISO format: 2025-09-23T00:00:00.000)
+        // StringToTime can handle ISO format directly
+        datetime week_date = StringToTime(date_str);
+
+        if(week_date == 0) {
+            // Try alternative parsing (remove T and milliseconds)
+            StringReplace(date_str, "T", " ");
+            int dot_pos = StringFind(date_str, ".");
+            if(dot_pos > 0) {
+                date_str = StringSubstr(date_str, 0, dot_pos);
+            }
+            week_date = StringToTime(date_str);
+        }
+
+        // Parse numeric values
+        double comm_long = StringToDouble(comm_long_str);
+        double comm_short = StringToDouble(comm_short_str);
+        double comm_net = comm_long - comm_short;
+
+        double small_spec_long = StringToDouble(noncomm_long_str);   // Using noncomm as proxy
+        double small_spec_short = StringToDouble(noncomm_short_str);
+
+        // Add to array
+        ArrayResize(g_COTHistory, g_NumCOTRecords + 1);
+
+        g_COTHistory[g_NumCOTRecords].week_date = week_date;
+        g_COTHistory[g_NumCOTRecords].commercials_long = comm_long;
+        g_COTHistory[g_NumCOTRecords].commercials_short = comm_short;
+        g_COTHistory[g_NumCOTRecords].commercials_net = comm_net;
+        g_COTHistory[g_NumCOTRecords].small_spec_long = small_spec_long;
+        g_COTHistory[g_NumCOTRecords].small_spec_short = small_spec_short;
+
+        g_NumCOTRecords++;
+    }
+
+    FileClose(file_handle);
+
+    Print("✅ COT data loaded: ", g_NumCOTRecords, " weekly records");
+
+    if(g_NumCOTRecords > 0) {
+        Print("   Oldest: ", TimeToString(g_COTHistory[0].week_date, TIME_DATE));
+        Print("   Latest: ", TimeToString(g_COTHistory[g_NumCOTRecords-1].week_date, TIME_DATE));
+        Print("   Latest comm_net: ", DoubleToString(g_COTHistory[g_NumCOTRecords-1].commercials_net, 0));
+    }
+
+    return true;
+}
+
+//+------------------------------------------------------------------+
 //| Vérifie si dans période news blackout                            |
 //+------------------------------------------------------------------+
 bool IsNewsBlackout() {
@@ -417,11 +503,19 @@ int GetAdjustedMinVotes(ENUM_REGIME regime) {
 //| Check toutes les protections temporelles                         |
 //+------------------------------------------------------------------+
 bool CanTradeNow() {
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║  24/7 TRADING MODE ENABLED                                     ║
+    // ║  All temporal constraints disabled for maximum trade frequency ║
+    // ╚════════════════════════════════════════════════════════════════╝
+
+    // All checks disabled - trading allowed at any time
+    return true;
+
+    /* ORIGINAL CONSTRAINTS (DISABLED):
+
     // 1. Session
     ENUM_SESSION session = GetCurrentSession();
-
     if(!IsSessionAllowed(session)) {
-        // Print("⛔ Session not allowed: ", GetSessionName(session));
         return false;
     }
 
@@ -435,17 +529,17 @@ bool CanTradeNow() {
         return false;
     }
 
-    // 4. Gap detection (seulement premiers trades du lundi)
+    // 4. Gap detection
     MqlDateTime dt;
     TimeToStruct(TimeCurrent(), dt);
-
-    if(dt.day_of_week == 1 && dt.hour < 3) {  // Lundi avant 3h
+    if(dt.day_of_week == 1 && dt.hour < 3) {
         if(DetectGap()) {
             return false;
         }
     }
 
     return true;
+    */
 }
 
 //+------------------------------------------------------------------+

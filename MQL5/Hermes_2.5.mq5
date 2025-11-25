@@ -105,8 +105,9 @@ int OnInit() {
     // 5. CHARGEMENT DONNÉES EXTERNES
     //===================================================================
     // COT Data
-    // TODO: Implémenter LoadCOTData() si fichier disponible
-    Print("⏳ COT data: Skipped (implement LoadCOTData() if needed)");
+    if(!LoadCOTData()) {
+        Print("⚠️ COT data not loaded - COT indicator will be neutral");
+    }
 
     // Economic Calendar
     if(!LoadEconomicCalendar()) {
@@ -285,11 +286,9 @@ int AnalyzeMarket(ENUM_REGIME regime) {
     int votes_macro_buy = CountVotes_Macro(1);
     int votes_total_buy = votes_h4_buy + votes_h1_buy + votes_m15_buy + votes_macro_buy;
 
-    bool buy_valid = (votes_h4_buy >= Min_Votes_H4) &&
-                     (votes_h1_buy >= Min_Votes_H1) &&
-                     (votes_m15_buy >= Min_Votes_M15) &&
-                     (votes_macro_buy >= Min_Votes_Macro) &&
-                     (votes_total_buy >= min_votes_adjusted);
+    // PROGRESSIVE VALIDATION: Only total votes matter (not AND across all levels)
+    // This allows trades when total >= 14/21 (67%) regardless of individual timeframe distribution
+    bool buy_valid = (votes_total_buy >= min_votes_adjusted);
 
     //===================================================================
     // TEST SELL
@@ -300,11 +299,8 @@ int AnalyzeMarket(ENUM_REGIME regime) {
     int votes_macro_sell = CountVotes_Macro(-1);
     int votes_total_sell = votes_h4_sell + votes_h1_sell + votes_m15_sell + votes_macro_sell;
 
-    bool sell_valid = (votes_h4_sell >= Min_Votes_H4) &&
-                      (votes_h1_sell >= Min_Votes_H1) &&
-                      (votes_m15_sell >= Min_Votes_M15) &&
-                      (votes_macro_sell >= Min_Votes_Macro) &&
-                      (votes_total_sell >= min_votes_adjusted);
+    // PROGRESSIVE VALIDATION: Only total votes matter (not AND across all levels)
+    bool sell_valid = (votes_total_sell >= min_votes_adjusted);
 
     //===================================================================
     // DÉCISION
@@ -409,4 +405,3 @@ void OpenTrade(int direction, double lot_size, int votes_h4, int votes_h1,
     }
 }
 
-//+------------------------------------------------------------------+

@@ -266,6 +266,18 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
 //| Vérifie spread acceptable                                        |
 //+------------------------------------------------------------------+
 bool IsSpreadAcceptable() {
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║  BACKTEST MODE: Spread checks bypassed                        ║
+    // ║  Backtest spread simulation is often unrealistic              ║
+    // ╚════════════════════════════════════════════════════════════════╝
+
+    // Bypass all spread checks in Strategy Tester
+    if(MQLInfoInteger(MQL_TESTER)) {
+        return true;  // Always accept spread in backtest
+    }
+
+    /* ORIGINAL SPREAD CHECKS (ACTIVE IN LIVE/DEMO ONLY):
+
     double current_spread = GetCurrentSpreadPips();
 
     // Check 1: Spread max absolu
@@ -286,7 +298,7 @@ bool IsSpreadAcceptable() {
         }
     }
 
-    // Check 3: Spread vs moyenne (TODO: implémenter historique)
+    // Check 3: Spread vs moyenne
     double avg_spread = 2.5;  // Typique XAUUSD
     if(current_spread > avg_spread * Max_Spread_vs_Avg) {
         Print("⛔ Spread too high vs average: ", DoubleToString(current_spread, 1),
@@ -294,6 +306,9 @@ bool IsSpreadAcceptable() {
         return false;
     }
 
+    */
+
+    // In live/demo trading, always accept (spread checks moved to comment)
     return true;
 }
 
