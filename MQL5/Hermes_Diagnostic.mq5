@@ -259,7 +259,7 @@ void AnalyzeCurrentBar() {
     else Print("Spread OK:        BLOCKED");
 
     int positions = PositionsTotal();
-    Print("Positions:        ", positions, "/", Max_Positions);
+    Print("Positions:        ", positions, " (max: 1 simultaneous)");
 
     Print("=================================================================");
     Print("                     DIAGNOSTIC COMPLETE                         ");
