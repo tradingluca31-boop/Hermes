@@ -63,111 +63,111 @@ void AnalyzeCurrentBar() {
 
     //--- H4 INDICATORS
     Print("");
-    Print("--- H4 TIMEFRAME (5 indicators) ---");
+    Print("=== H4 TIMEFRAME (5 indicators) ===");
     int h4_buy = 0, h4_sell = 0;
 
-    if(Indicator_SMA_Cross_H4(1)) { h4_buy++; Print("  [BUY]  SMA Cross H4"); }
-    else if(Indicator_SMA_Cross_H4(-1)) { h4_sell++; Print("  [SELL] SMA Cross H4"); }
-    else Print("  [---]  SMA Cross H4");
+    if(Indicator_EMA_Cross_H4(1)) { h4_buy++; Print("  [BUY]  EMA Cross H4"); }
+    else if(Indicator_EMA_Cross_H4(-1)) { h4_sell++; Print("  [SELL] EMA Cross H4"); }
+    else Print("  [ - ]  EMA Cross H4");
 
     if(Indicator_ADX_H4(1)) { h4_buy++; Print("  [BUY]  ADX H4"); }
     else if(Indicator_ADX_H4(-1)) { h4_sell++; Print("  [SELL] ADX H4"); }
-    else Print("  [---]  ADX H4");
+    else Print("  [ - ]  ADX H4");
 
-    if(Indicator_Trend_Strength_H4(1)) { h4_buy++; Print("  [BUY]  Trend Strength H4"); }
-    else if(Indicator_Trend_Strength_H4(-1)) { h4_sell++; Print("  [SELL] Trend Strength H4"); }
-    else Print("  [---]  Trend Strength H4");
+    if(Indicator_EMA_50_200_H4(1)) { h4_buy++; Print("  [BUY]  EMA 50/200 H4"); }
+    else if(Indicator_EMA_50_200_H4(-1)) { h4_sell++; Print("  [SELL] EMA 50/200 H4"); }
+    else Print("  [ - ]  EMA 50/200 H4");
 
-    if(Indicator_Swing_Range_H4(1)) { h4_buy++; Print("  [BUY]  Swing Range H4"); }
-    else if(Indicator_Swing_Range_H4(-1)) { h4_sell++; Print("  [SELL] Swing Range H4"); }
-    else Print("  [---]  Swing Range H4");
+    if(Indicator_Price_EMA21_H4(1)) { h4_buy++; Print("  [BUY]  Price vs EMA21 H4"); }
+    else if(Indicator_Price_EMA21_H4(-1)) { h4_sell++; Print("  [SELL] Price vs EMA21 H4"); }
+    else Print("  [ - ]  Price vs EMA21 H4");
 
     if(Indicator_Supertrend_H4(1)) { h4_buy++; Print("  [BUY]  Supertrend H4"); }
     else if(Indicator_Supertrend_H4(-1)) { h4_sell++; Print("  [SELL] Supertrend H4"); }
-    else Print("  [---]  Supertrend H4");
+    else Print("  [ - ]  Supertrend H4");
 
     Print("H4 TOTAL: BUY=", h4_buy, "/5  SELL=", h4_sell, "/5");
 
     //--- H1 INDICATORS
     Print("");
-    Print("--- H1 TIMEFRAME (8 indicators) ---");
+    Print("=== H1 TIMEFRAME (8 indicators) ===");
     int h1_buy = 0, h1_sell = 0;
 
     if(Indicator_EMA_Cross_H1(1)) { h1_buy++; Print("  [BUY]  EMA Cross H1"); }
     else if(Indicator_EMA_Cross_H1(-1)) { h1_sell++; Print("  [SELL] EMA Cross H1"); }
-    else Print("  [---]  EMA Cross H1");
+    else Print("  [ - ]  EMA Cross H1");
 
     if(Indicator_MACD_H1(1)) { h1_buy++; Print("  [BUY]  MACD H1"); }
     else if(Indicator_MACD_H1(-1)) { h1_sell++; Print("  [SELL] MACD H1"); }
-    else Print("  [---]  MACD H1");
+    else Print("  [ - ]  MACD H1");
 
     if(Indicator_RSI_H1(1)) { h1_buy++; Print("  [BUY]  RSI H1 (widened)"); }
     else if(Indicator_RSI_H1(-1)) { h1_sell++; Print("  [SELL] RSI H1 (widened)"); }
-    else Print("  [---]  RSI H1");
+    else Print("  [ - ]  RSI H1");
 
     if(Indicator_SAR_H1(1)) { h1_buy++; Print("  [BUY]  SAR H1"); }
     else if(Indicator_SAR_H1(-1)) { h1_sell++; Print("  [SELL] SAR H1"); }
-    else Print("  [---]  SAR H1");
+    else Print("  [ - ]  SAR H1");
 
     if(Indicator_Stochastic_H1(1)) { h1_buy++; Print("  [BUY]  Stochastic H1 (widened)"); }
     else if(Indicator_Stochastic_H1(-1)) { h1_sell++; Print("  [SELL] Stochastic H1 (widened)"); }
-    else Print("  [---]  Stochastic H1");
+    else Print("  [ - ]  Stochastic H1");
 
     if(Indicator_Bollinger_Width_H1(1)) { h1_buy++; Print("  [BUY]  Bollinger H1"); }
     else if(Indicator_Bollinger_Width_H1(-1)) { h1_sell++; Print("  [SELL] Bollinger H1"); }
-    else Print("  [---]  Bollinger H1");
+    else Print("  [ - ]  Bollinger H1");
 
     if(Indicator_Volume_Momentum_H1(1)) { h1_buy++; Print("  [BUY]  Volume H1"); }
     else if(Indicator_Volume_Momentum_H1(-1)) { h1_sell++; Print("  [SELL] Volume H1"); }
-    else Print("  [---]  Volume H1");
+    else Print("  [ - ]  Volume H1");
 
     if(Indicator_Donchian_H1(1)) { h1_buy++; Print("  [BUY]  Donchian H1"); }
     else if(Indicator_Donchian_H1(-1)) { h1_sell++; Print("  [SELL] Donchian H1"); }
-    else Print("  [---]  Donchian H1");
+    else Print("  [ - ]  Donchian H1");
 
     Print("H1 TOTAL: BUY=", h1_buy, "/8  SELL=", h1_sell, "/8");
 
     //--- M15 INDICATORS
     Print("");
-    Print("--- M15 TIMEFRAME (6 indicators) ---");
+    Print("=== M15 TIMEFRAME (6 indicators) ===");
     int m15_buy = 0, m15_sell = 0;
 
-    if(Indicator_CCI_M15(1)) { m15_buy++; Print("  [BUY]  CCI M15"); }
-    else if(Indicator_CCI_M15(-1)) { m15_sell++; Print("  [SELL] CCI M15"); }
-    else Print("  [---]  CCI M15");
+    if(Indicator_VWAP_M15(1)) { m15_buy++; Print("  [BUY]  VWAP M15"); }
+    else if(Indicator_VWAP_M15(-1)) { m15_sell++; Print("  [SELL] VWAP M15"); }
+    else Print("  [ - ]  VWAP M15");
 
-    if(Indicator_Williams_R_M15(1)) { m15_buy++; Print("  [BUY]  Williams R M15"); }
-    else if(Indicator_Williams_R_M15(-1)) { m15_sell++; Print("  [SELL] Williams R M15"); }
-    else Print("  [---]  Williams R M15");
+    if(Indicator_OrderFlow_M15(1)) { m15_buy++; Print("  [BUY]  OrderFlow M15"); }
+    else if(Indicator_OrderFlow_M15(-1)) { m15_sell++; Print("  [SELL] OrderFlow M15"); }
+    else Print("  [ - ]  OrderFlow M15");
 
-    if(Indicator_MFI_M15(1)) { m15_buy++; Print("  [BUY]  MFI M15"); }
-    else if(Indicator_MFI_M15(-1)) { m15_sell++; Print("  [SELL] MFI M15"); }
-    else Print("  [---]  MFI M15");
+    if(Indicator_Volatility_M15(1)) { m15_buy++; Print("  [BUY]  Volatility M15"); }
+    else if(Indicator_Volatility_M15(-1)) { m15_sell++; Print("  [SELL] Volatility M15"); }
+    else Print("  [ - ]  Volatility M15");
 
     if(Indicator_Tick_Momentum_M15(1)) { m15_buy++; Print("  [BUY]  Tick Momentum M15"); }
     else if(Indicator_Tick_Momentum_M15(-1)) { m15_sell++; Print("  [SELL] Tick Momentum M15"); }
-    else Print("  [---]  Tick Momentum M15");
+    else Print("  [ - ]  Tick Momentum M15");
 
     if(Indicator_EURUSD_Corr_M15(1)) { m15_buy++; Print("  [BUY]  EURUSD Corr M15"); }
     else if(Indicator_EURUSD_Corr_M15(-1)) { m15_sell++; Print("  [SELL] EURUSD Corr M15"); }
-    else Print("  [---]  EURUSD Corr M15 (optional)");
+    else Print("  [ - ]  EURUSD Corr M15 (optional)");
 
     if(Indicator_Effective_Spread_M15(1)) { m15_buy++; Print("  [OK]   Spread M15 valid"); }
-    else Print("  [---]  Spread M15");
+    else Print("  [ - ]  Spread M15");
 
     Print("M15 TOTAL: BUY=", m15_buy, "/6  SELL=", m15_sell, "/6");
 
     //--- MACRO INDICATORS
     Print("");
-    Print("--- MACRO INDICATORS (2 total) ---");
+    Print("=== MACRO INDICATORS (2 total) ===");
     int macro_buy = 0, macro_sell = 0;
 
     if(Indicator_COT(1)) { macro_buy++; Print("  [BUY]  COT"); }
     else if(Indicator_COT(-1)) { macro_sell++; Print("  [SELL] COT"); }
-    else Print("  [---]  COT (", g_NumCOTRecords, " records)");
+    else Print("  [ - ]  COT (", g_NumCOTRecords, " records)");
 
     if(Indicator_ATR_Percentile(1)) { macro_buy++; Print("  [OK]   ATR Percentile valid"); }
-    else Print("  [---]  ATR Percentile");
+    else Print("  [ - ]  ATR Percentile");
 
     Print("MACRO TOTAL: BUY=", macro_buy, "/2  SELL=", macro_sell, "/2");
 
