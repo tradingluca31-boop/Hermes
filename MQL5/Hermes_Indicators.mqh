@@ -134,20 +134,29 @@ bool Indicator_Supertrend_H4(int direction) {
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 6: EMA Cross Signal H1                                |
-//| Détection croisement EMA 21/55 (lookback 3 bougies)              |
+//| FIXED: Position relative OU croisement récent (10 bougies)       |
+//| Valide si EMA21 > EMA55 (BUY) ou croisement récent               |
 //+------------------------------------------------------------------+
 bool Indicator_EMA_Cross_H1(int direction) {
     double ema21[], ema55[];
     ArraySetAsSeries(ema21, true);
     ArraySetAsSeries(ema55, true);
 
-    if(CopyBuffer(h_EMA21_H1, 0, 0, 4, ema21) <= 0) return false;
-    if(CopyBuffer(h_EMA55_H1, 0, 0, 4, ema55) <= 0) return false;
+    if(CopyBuffer(h_EMA21_H1, 0, 0, 11, ema21) <= 0) return false;
+    if(CopyBuffer(h_EMA55_H1, 0, 0, 11, ema55) <= 0) return false;
 
-    // Détection cross dans les 3 dernières bougies
+    // CONDITION 1: Position relative actuelle (tendance établie)
+    bool position_valid = false;
+    if(direction == 1) {  // BUY
+        position_valid = (ema21[0] > ema55[0]);
+    }
+    else if(direction == -1) {  // SELL
+        position_valid = (ema21[0] < ema55[0]);
+    }
+
+    // CONDITION 2: Croisement récent (bonus, lookback étendu à 10 bougies)
     bool cross_detected = false;
-
-    for(int i = 0; i < 3; i++) {
+    for(int i = 0; i < 10; i++) {
         if(direction == 1) {  // BUY - Cross up
             if(ema21[i] > ema55[i] && ema21[i+1] <= ema55[i+1]) {
                 cross_detected = true;
@@ -162,7 +171,8 @@ bool Indicator_EMA_Cross_H1(int direction) {
         }
     }
 
-    return cross_detected;
+    // Valide si position correcte OU croisement récent
+    return (position_valid || cross_detected);
 }
 
 //+------------------------------------------------------------------+
@@ -270,7 +280,8 @@ bool Indicator_Stochastic_H1(int direction) {
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 11: Bollinger Width H1                                |
-//| Volatility breakout imminent (expansion > avg × 1.2)             |
+//| FIXED: Seuil réduit à 0.9× (volatilité normale ou expansion)     |
+//| Valide si volatilité >= 90% de la moyenne (pas squeeze extrême)  |
 //+------------------------------------------------------------------+
 bool Indicator_Bollinger_Width_H1(int direction) {
     double bb_upper[], bb_lower[], bb_middle[];
@@ -294,15 +305,16 @@ bool Indicator_Bollinger_Width_H1(int direction) {
     }
     double avg_width = sum_width / 20.0;
 
-    // Expansion si width > avg × 1.2
-    bool expansion = (current_width > avg_width * 1.2);
+    // Valide si width >= 90% de la moyenne (évite seulement les squeezes extrêmes)
+    bool valid_volatility = (current_width >= avg_width * 0.9);
 
-    return expansion;  // Valide pour BUY et SELL
+    return valid_volatility;  // Valide pour BUY et SELL
 }
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 12: Volume Momentum H1                                |
-//| Conviction volume (Vol × ΔPrice > 0 et croissant)                |
+//| FIXED: Simplifié - Volume × ΔPrice dans la bonne direction       |
+//| OU volume supérieur à la moyenne (conviction institutionnelle)   |
 //+------------------------------------------------------------------+
 bool Indicator_Volume_Momentum_H1(int direction) {
     double close[];
@@ -310,21 +322,32 @@ bool Indicator_Volume_Momentum_H1(int direction) {
     ArraySetAsSeries(close, true);
     ArraySetAsSeries(volume, true);
 
-    if(CopyClose(SYMBOL_TRADED, TF_SETUP, 0, 3, close) <= 0) return false;
-    if(CopyTickVolume(SYMBOL_TRADED, TF_SETUP, 0, 3, volume) <= 0) return false;
+    if(CopyClose(SYMBOL_TRADED, TF_SETUP, 0, 21, close) <= 0) return false;
+    if(CopyTickVolume(SYMBOL_TRADED, TF_SETUP, 0, 21, volume) <= 0) return false;
 
-    // ΔPrice
+    // ΔPrice actuel
     double delta_price = close[0] - close[1];
 
-    // Volume momentum
-    double vol_momentum_current = volume[0] * delta_price;
-    double vol_momentum_prev = volume[1] * (close[1] - close[2]);
+    // Volume momentum actuel
+    double vol_momentum_current = (double)volume[0] * delta_price;
+
+    // Volume moyen sur 20 périodes
+    double sum_vol = 0.0;
+    for(int i = 1; i < 21; i++) {
+        sum_vol += (double)volume[i];
+    }
+    double avg_vol = sum_vol / 20.0;
+
+    // Volume actuel supérieur à 80% de la moyenne = conviction
+    bool high_volume = ((double)volume[0] >= avg_vol * 0.8);
 
     if(direction == 1) {  // BUY
-        return (vol_momentum_current > 0 && vol_momentum_current > vol_momentum_prev);
+        // Momentum positif OU volume élevé avec mouvement haussier
+        return (vol_momentum_current > 0 || (high_volume && delta_price > 0));
     }
     else if(direction == -1) {  // SELL
-        return (vol_momentum_current < 0 && vol_momentum_current < vol_momentum_prev);
+        // Momentum négatif OU volume élevé avec mouvement baissier
+        return (vol_momentum_current < 0 || (high_volume && delta_price < 0));
     }
 
     return false;
@@ -332,7 +355,8 @@ bool Indicator_Volume_Momentum_H1(int direction) {
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 13: Donchian Breakout H1                              |
-//| Breakout structurel (High(20) / Low(20))                         |
+//| FIXED: Période réduite à 10 + zone haute/basse (top/bottom 20%)  |
+//| Valide si breakout OU dans la zone extrême du range              |
 //+------------------------------------------------------------------+
 bool Indicator_Donchian_H1(int direction) {
     double high[], low[], close[];
@@ -340,24 +364,30 @@ bool Indicator_Donchian_H1(int direction) {
     ArraySetAsSeries(low, true);
     ArraySetAsSeries(close, true);
 
-    if(CopyHigh(SYMBOL_TRADED, TF_SETUP, 0, 21, high) <= 0) return false;
-    if(CopyLow(SYMBOL_TRADED, TF_SETUP, 0, 21, low) <= 0) return false;
+    if(CopyHigh(SYMBOL_TRADED, TF_SETUP, 0, 11, high) <= 0) return false;
+    if(CopyLow(SYMBOL_TRADED, TF_SETUP, 0, 11, low) <= 0) return false;
     if(CopyClose(SYMBOL_TRADED, TF_SETUP, 0, 2, close) <= 0) return false;
 
-    // High(20) et Low(20) des 20 dernières bougies (excluant la courante)
+    // High(10) et Low(10) des 10 dernières bougies (période réduite)
     double highest = high[1];
     double lowest = low[1];
 
-    for(int i = 2; i < 21; i++) {
+    for(int i = 2; i < 11; i++) {
         if(high[i] > highest) highest = high[i];
         if(low[i] < lowest) lowest = low[i];
     }
 
+    double range = highest - lowest;
+    double threshold_high = highest - (range * 0.20);  // Top 20%
+    double threshold_low = lowest + (range * 0.20);    // Bottom 20%
+
     if(direction == 1) {  // BUY
-        return (close[0] > highest);
+        // Breakout OU dans la zone haute (top 20% du range)
+        return (close[0] > highest || close[0] >= threshold_high);
     }
     else if(direction == -1) {  // SELL
-        return (close[0] < lowest);
+        // Breakout OU dans la zone basse (bottom 20% du range)
+        return (close[0] < lowest || close[0] <= threshold_low);
     }
 
     return false;
@@ -420,7 +450,8 @@ bool Indicator_VWAP_M15(int direction) {
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 15: Order Flow Delta M15                              |
-//| Pression achat/vente (Delta cumulatif lookback 20)               |
+//| FIXED: Simplifié - Delta cumulatif positif/négatif suffit        |
+//| Valide si pression achat/vente dans la bonne direction           |
 //+------------------------------------------------------------------+
 bool Indicator_OrderFlow_M15(int direction) {
     double close[];
@@ -432,9 +463,8 @@ bool Indicator_OrderFlow_M15(int direction) {
     if(CopyClose(SYMBOL_TRADED, TF_TIMING, 0, 21, close) <= 0) return false;
     if(CopyTickVolume(SYMBOL_TRADED, TF_TIMING, 0, 21, volume) <= 0) return false;
 
-    // Calcul delta (simplification: uptick si close > close_prev)
+    // Calcul delta cumulatif (simplification: uptick si close > close_prev)
     double delta_cumul = 0.0;
-    double delta_prev_cumul = 0.0;
 
     for(int i = 0; i < 20; i++) {
         double delta_price = close[i] - close[i+1];
@@ -445,21 +475,15 @@ bool Indicator_OrderFlow_M15(int direction) {
         else if(delta_price < 0) {  // Downtick
             delta_cumul -= (double)volume[i];
         }
-
-        // Delta précédent (pour détecter croissance)
-        if(i > 0) {
-            if(close[i+1] > close[i+2])
-                delta_prev_cumul += (double)volume[i+1];
-            else if(close[i+1] < close[i+2])
-                delta_prev_cumul -= (double)volume[i+1];
-        }
     }
 
     if(direction == 1) {  // BUY
-        return (delta_cumul > 0 && delta_cumul > delta_prev_cumul);
+        // Simplifié: delta positif = pression acheteuse
+        return (delta_cumul > 0);
     }
     else if(direction == -1) {  // SELL
-        return (delta_cumul < 0 && delta_cumul < delta_prev_cumul);
+        // Simplifié: delta négatif = pression vendeuse
+        return (delta_cumul < 0);
     }
 
     return false;
@@ -467,7 +491,8 @@ bool Indicator_OrderFlow_M15(int direction) {
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 16: Volatility Regime M15                             |
-//| Expansion volatilité (ATR actuel > ATR(50) × 1.2)                |
+//| FIXED: Seuil réduit à 0.7× (évite seulement volatilité très basse)|
+//| Valide si ATR >= 70% de la moyenne (conditions tradables)        |
 //+------------------------------------------------------------------+
 bool Indicator_Volatility_M15(int direction) {
     double atr[];
@@ -484,15 +509,16 @@ bool Indicator_Volatility_M15(int direction) {
     }
     double atr_avg = sum_atr / 50.0;
 
-    // Expansion si ATR > avg × 1.2
-    bool expansion = (atr_current > atr_avg * 1.2);
+    // Valide si ATR >= 70% de la moyenne (évite seulement les marchés morts)
+    bool valid_volatility = (atr_current >= atr_avg * 0.7);
 
-    return expansion;  // Valide pour BUY et SELL
+    return valid_volatility;  // Valide pour BUY et SELL
 }
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 17: Tick Momentum M15                                 |
-//| Urgence acheteurs/vendeurs (Upticks/Total > 60%)                 |
+//| FIXED: Seuil réduit à 52% (majorité simple + petit biais)        |
+//| Valide si légère majorité dans la direction du trade             |
 //+------------------------------------------------------------------+
 bool Indicator_Tick_Momentum_M15(int direction) {
     double close[];
@@ -519,10 +545,12 @@ bool Indicator_Tick_Momentum_M15(int direction) {
     double downtick_ratio = (double)downticks / total;
 
     if(direction == 1) {  // BUY
-        return (uptick_ratio > 0.60);
+        // Seuil réduit: majorité simple avec léger biais (52%)
+        return (uptick_ratio >= 0.52);
     }
     else if(direction == -1) {  // SELL
-        return (downtick_ratio > 0.60);
+        // Seuil réduit: majorité simple avec léger biais (52%)
+        return (downtick_ratio >= 0.52);
     }
 
     return false;
@@ -622,7 +650,8 @@ bool Indicator_COT(int direction) {
 
 //+------------------------------------------------------------------+
 //| INDICATEUR 21: ATR Percentile                                    |
-//| Contexte volatilité favorable (ATR dans top 30%)                 |
+//| FIXED: Élargi à top 60% (évite seulement volatilité très basse)  |
+//| Valide si ATR pas dans le bottom 40%                             |
 //+------------------------------------------------------------------+
 bool Indicator_ATR_Percentile(int direction) {
     double atr_daily[];
@@ -645,14 +674,14 @@ bool Indicator_ATR_Percentile(int direction) {
     ArrayCopy(atr_sorted, atr_daily, 0, 1, 200);  // Copie 200 derniers (excluant current)
     ArraySort(atr_sorted);
 
-    // Top 30% = index > 140 (200 × 0.70)
-    double threshold_70 = atr_sorted[140];
+    // Top 60% = index > 80 (200 × 0.40) - évite seulement le bottom 40%
+    double threshold_40 = atr_sorted[80];
 
-    bool in_top_30 = (atr_current >= threshold_70);
+    bool in_top_60 = (atr_current >= threshold_40);
 
     IndicatorRelease(h_ATR_D1);
 
-    return in_top_30;  // Valide pour BUY et SELL
+    return in_top_60;  // Valide pour BUY et SELL
 }
 
 //+------------------------------------------------------------------+
