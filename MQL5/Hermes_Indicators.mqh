@@ -635,6 +635,13 @@ double GetCOTVote() {
 }
 
 bool Indicator_COT(int direction) {
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║  COT DISABLED - Always returns TRUE (1 vote)                   ║
+    // ║  COT data loading removed to simplify EA                       ║
+    // ╚════════════════════════════════════════════════════════════════╝
+    return true;  // Always vote YES
+
+    /* ORIGINAL COT LOGIC (DISABLED):
     double cot_vote = GetCOTVote();
 
     // Alignement avec direction
@@ -646,6 +653,7 @@ bool Indicator_COT(int direction) {
     }
 
     return false;
+    */
 }
 
 //+------------------------------------------------------------------+

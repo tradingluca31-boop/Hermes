@@ -102,17 +102,18 @@ int OnInit() {
     Print("✅ Global variables initialized");
 
     //===================================================================
-    // 5. CHARGEMENT DONNÉES EXTERNES
+    // 5. CHARGEMENT DONNÉES EXTERNES (DISABLED)
     //===================================================================
-    // COT Data
-    if(!LoadCOTData()) {
-        Print("⚠️ COT data not loaded - COT indicator will be neutral");
-    }
+    // COT Data - DISABLED (always returns TRUE now)
+    // if(!LoadCOTData()) {
+    //     Print("⚠️ COT data not loaded - COT indicator will be neutral");
+    // }
 
-    // Economic Calendar
-    if(!LoadEconomicCalendar()) {
-        Print("⚠️ Economic calendar not loaded - News blackout disabled");
-    }
+    // Economic Calendar - DISABLED (no news blackout)
+    // if(!LoadEconomicCalendar()) {
+    //     Print("⚠️ Economic calendar not loaded - News blackout disabled");
+    // }
+    Print("ℹ️ COT and Economic Calendar DISABLED for simplified trading");
 
     //===================================================================
     // 6. INITIALISATION LOGGING CSV
@@ -203,11 +204,12 @@ void OnTick() {
     }
 
     //===================================================================
-    // STEP 2: NOUVELLE BOUGIE M15 ?
+    // STEP 2: NOUVELLE BOUGIE M15 ? (DISABLED - Trade immediately)
     //===================================================================
-    if(!IsNewCandle()) {
-        return;  // Attendre nouvelle bougie
-    }
+    // IsNewCandle check REMOVED - EA now trades on every tick when conditions are met
+    // if(!IsNewCandle()) {
+    //     return;
+    // }
 
     //===================================================================
     // STEP 3: RESET DAILY (MINUIT)
