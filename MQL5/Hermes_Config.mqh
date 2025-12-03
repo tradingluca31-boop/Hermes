@@ -33,11 +33,11 @@
 //| INPUT PARAMETERS - VALIDATION                                    |
 //+------------------------------------------------------------------+
 input group "=== VALIDATION SYSTÈME ==="
-input int Min_Votes_H4 = 3;           // Minimum votes H4 (sur 5) - 60%
-input int Min_Votes_H1 = 5;           // Minimum votes H1 (sur 8) - 63%
-input int Min_Votes_M15 = 4;          // Minimum votes M15 (sur 6) - 67%
-input int Min_Votes_Macro = 1;        // Minimum votes Macro (sur 1) - ATR only
-input int Min_Votes_Total = 13;       // Minimum votes Global (sur 20) - 65% (COT removed)
+input int Min_Votes_H4 = 1;           // Minimum votes H4 (sur 5) - TEST: 1
+input int Min_Votes_H1 = 1;           // Minimum votes H1 (sur 8) - TEST: 1
+input int Min_Votes_M15 = 1;          // Minimum votes M15 (sur 6) - TEST: 1
+input int Min_Votes_Macro = 0;        // Minimum votes Macro (sur 1) - TEST: 0
+input int Min_Votes_Total = 5;        // Minimum votes Global (sur 20) - TEST: 5 (25%)
 
 //+------------------------------------------------------------------+
 //| INPUT PARAMETERS - RISK MANAGEMENT                               |

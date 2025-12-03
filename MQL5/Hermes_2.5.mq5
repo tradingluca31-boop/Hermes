@@ -195,6 +195,11 @@ void OnDeinit(const int reason) {
 //| Expert tick function                                              |
 //+------------------------------------------------------------------+
 void OnTick() {
+    // DEBUG: Log every 1000 ticks to avoid spam
+    static int tick_count = 0;
+    tick_count++;
+    bool debug_tick = (tick_count % 1000 == 0);
+
     //===================================================================
     // STEP 1: GESTION POSITION EXISTANTE
     //===================================================================
@@ -232,11 +237,13 @@ void OnTick() {
     //===================================================================
     // 6.1 Protections temporelles
     if(!CanTradeNow()) {
+        if(debug_tick) Print("DEBUG: CanTradeNow() = FALSE");
         return;
     }
 
     // 6.2 Protections risk
     if(!CanOpenNewTrade(session)) {
+        if(debug_tick) Print("DEBUG: CanOpenNewTrade() = FALSE");
         return;
     }
 
@@ -246,7 +253,13 @@ void OnTick() {
     int direction = AnalyzeMarket(regime);
 
     if(direction == 0) {
-        // Aucun signal validé
+        // DEBUG: Show vote counts when no signal
+        if(debug_tick) {
+            int buy_votes = CountVotes_H4(1) + CountVotes_H1(1) + CountVotes_M15(1) + CountVotes_Macro(1);
+            int sell_votes = CountVotes_H4(-1) + CountVotes_H1(-1) + CountVotes_M15(-1) + CountVotes_Macro(-1);
+            int min_votes = GetAdjustedMinVotes(regime);
+            Print("DEBUG: No signal - BUY=", buy_votes, "/20, SELL=", sell_votes, "/20, MIN=", min_votes);
+        }
         return;
     }
 
