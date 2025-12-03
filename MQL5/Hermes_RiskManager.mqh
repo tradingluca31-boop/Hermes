@@ -248,12 +248,30 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
     lot_size = NormalizeLotSize(lot_size);
 
     // ╔════════════════════════════════════════════════════════════════╗
-    // ║  SAFETY CAP: Maximum 5 lots to prevent margin errors           ║
+    // ║  MARGIN CHECK: Calculate max affordable lots                    ║
     // ║  Error 4756 occurs when lot size exceeds account margin        ║
     // ╚════════════════════════════════════════════════════════════════╝
-    double max_safe_lots = 5.0;  // Safe maximum for most accounts
+    double margin_required = 0;
+    double account_free_margin = AccountInfoDouble(ACCOUNT_MARGIN_FREE);
+    if(account_free_margin <= 0) account_free_margin = AccountInfoDouble(ACCOUNT_BALANCE);
+
+    // Calculate max affordable lots (use 40% of free margin max for safety)
+    if(OrderCalcMargin(ORDER_TYPE_BUY, SYMBOL_TRADED, 1.0, SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_ASK), margin_required)) {
+        if(margin_required > 0) {
+            double max_affordable = (account_free_margin * 0.40) / margin_required;
+            max_affordable = NormalizeLotSize(max_affordable);
+
+            if(lot_size > max_affordable) {
+                Print("⚠️ Lot size capped from ", DoubleToString(lot_size, 2), " to ", DoubleToString(max_affordable, 2), " (margin: ", DoubleToString(account_free_margin, 0), "$)");
+                lot_size = max_affordable;
+            }
+        }
+    }
+
+    // Hard cap at 1.5 lots for $10k accounts
+    double max_safe_lots = 1.5;
     if(lot_size > max_safe_lots) {
-        Print("⚠️ Lot size capped from ", DoubleToString(lot_size, 2), " to ", DoubleToString(max_safe_lots, 2));
+        Print("⚠️ Lot size hard-capped to ", DoubleToString(max_safe_lots, 2));
         lot_size = max_safe_lots;
     }
 
