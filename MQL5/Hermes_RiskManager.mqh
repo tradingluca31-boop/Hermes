@@ -297,7 +297,7 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
     Print("     - COT: ×", DoubleToString(mult_cot, 2));
     Print("     - Spread: ×", DoubleToString(mult_spread, 2));
     Print("   Risk Final: ", DoubleToString(risk_pct, 2), "% = $", DoubleToString(risk_amount, 2));
-    Print("   SL Distance: ", DoubleToString(sl_distance_pips, 1), " pips");
+    Print("   SL Distance: ", DoubleToString(sl_distance_price, 2), " ($", DoubleToString(sl_in_ticks, 0), " ticks)");
     Print("   Lot Size: ", DoubleToString(lot_size, 2));
 
     return lot_size;
