@@ -195,10 +195,17 @@ void OnDeinit(const int reason) {
 //| Expert tick function                                              |
 //+------------------------------------------------------------------+
 void OnTick() {
-    // DEBUG: Log every 1000 ticks to avoid spam
+    // DEBUG: Log every 5000 ticks to see what's blocking
     static int tick_count = 0;
+    static int last_trade_count = 0;
     tick_count++;
-    bool debug_tick = (tick_count % 1000 == 0);
+    bool debug_tick = (tick_count % 5000 == 0);
+
+    // Log when no trade for a while
+    if(debug_tick && g_TotalTrades == last_trade_count) {
+        Print("🔍 DEBUG tick #", tick_count, " - Still ", g_TotalTrades, " trades");
+    }
+    last_trade_count = g_TotalTrades;
 
     //===================================================================
     // STEP 1: GESTION POSITION EXISTANTE
@@ -253,12 +260,12 @@ void OnTick() {
     int direction = AnalyzeMarket(regime);
 
     if(direction == 0) {
-        // DEBUG: Show vote counts when no signal
-        if(debug_tick) {
+        // DEBUG: Show vote counts when no signal - every 10000 ticks
+        if(tick_count % 10000 == 0) {
             int buy_votes = CountVotes_H4(1) + CountVotes_H1(1) + CountVotes_M15(1) + CountVotes_Macro(1);
             int sell_votes = CountVotes_H4(-1) + CountVotes_H1(-1) + CountVotes_M15(-1) + CountVotes_Macro(-1);
             int min_votes = GetAdjustedMinVotes(regime);
-            Print("DEBUG: No signal - BUY=", buy_votes, "/20, SELL=", sell_votes, "/20, MIN=", min_votes);
+            Print("📊 Votes: BUY=", buy_votes, "/20, SELL=", sell_votes, "/20, MIN=", min_votes, " (need signal)");
         }
         return;
     }
