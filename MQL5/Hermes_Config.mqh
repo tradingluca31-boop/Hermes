@@ -291,9 +291,8 @@ void InitIndicatorWeights() {
     Indicator_Weights[17] = Weight_EURUSD_M15;
     Indicator_Weights[18] = Weight_Spread_M15;
 
-    // Macro (2)
-    Indicator_Weights[19] = Weight_COT;
-    Indicator_Weights[20] = Weight_ATR_Percentile;
+    // Macro (1) - COT removed
+    Indicator_Weights[19] = Weight_ATR_Percentile;
 }
 
 //+------------------------------------------------------------------+
