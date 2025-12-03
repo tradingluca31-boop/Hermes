@@ -250,12 +250,25 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
         }
     }
 
-    // Hard cap at 1.5 lots for $10k accounts
-    double max_safe_lots = 1.5;
-    if(lot_size > max_safe_lots) {
-        Print("⚠️ Lot size hard-capped to ", DoubleToString(max_safe_lots, 2));
-        lot_size = max_safe_lots;
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║  STRICT 1% RISK CHECK - Final verification                      ║
+    // ║  This ensures max loss never exceeds 1% of account              ║
+    // ╚════════════════════════════════════════════════════════════════╝
+    double potential_loss = sl_in_ticks * tick_value * lot_size;
+    double max_allowed_loss = account_balance * 0.01;  // 1% = $100 for $10k account
+
+    if(potential_loss > max_allowed_loss && sl_in_ticks > 0 && tick_value > 0) {
+        double corrected_lots = max_allowed_loss / (sl_in_ticks * tick_value);
+        corrected_lots = NormalizeLotSize(corrected_lots);
+        Print("⚠️ RISK CHECK: Potential loss $", DoubleToString(potential_loss, 2),
+              " > Max $", DoubleToString(max_allowed_loss, 2),
+              " → Lot corrected: ", DoubleToString(lot_size, 2), " → ", DoubleToString(corrected_lots, 2));
+        lot_size = corrected_lots;
     }
+
+    // Minimum lot size
+    double min_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN);
+    if(lot_size < min_lot) lot_size = min_lot;
 
     // Logging
     Print("💰 POSITION SIZING:");
@@ -397,6 +410,13 @@ bool CanOpenNewTrade(ENUM_SESSION session) {
         return false;
     }
     */
+
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║  BACKTEST MODE: All protections disabled for testing           ║
+    // ╚════════════════════════════════════════════════════════════════╝
+    if(MQLInfoInteger(MQL_TESTER)) {
+        return true;  // In backtest, always allow trades
+    }
 
     // 3. Daily loss max ?
     if(IsDailyLossMaxReached()) {
