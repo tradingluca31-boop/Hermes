@@ -135,30 +135,12 @@ double GetDrawdownMultiplier() {
 }
 
 //+------------------------------------------------------------------+
-//| 6. COT MULTIPLIER                                                |
-//| Aligné: ×1.1-1.2, Neutre: ×1.0, Contre: ×0.8-0.9                |
+//| 6. COT MULTIPLIER - DISABLED (COT removed)                       |
+//| Always returns 1.0 (neutral)                                     |
 //+------------------------------------------------------------------+
 double GetCOTMultiplier(int direction) {
-    double cot_vote = GetCOTVote();
-
-    // Direction alignée avec COT ?
-    bool aligned = (direction == 1 && cot_vote > 0) ||
-                   (direction == -1 && cot_vote < 0);
-
-    if(aligned) {
-        if(MathAbs(cot_vote) >= 0.9)  // STRONG (±1.0)
-            return 1.2;
-        else if(MathAbs(cot_vote) >= 0.4)  // MODERATE (±0.5)
-            return 1.1;
-    }
-    else if(!aligned && cot_vote != 0) {  // Contre COT
-        if(MathAbs(cot_vote) >= 0.9)  // STRONG contre
-            return 0.8;
-        else if(MathAbs(cot_vote) >= 0.4)  // MODERATE contre
-            return 0.9;
-    }
-
-    return 1.0;  // NEUTRAL
+    // COT indicator removed - always return neutral multiplier
+    return 1.0;
 }
 
 //+------------------------------------------------------------------+
