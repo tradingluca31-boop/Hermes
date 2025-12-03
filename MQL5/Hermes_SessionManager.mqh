@@ -472,27 +472,28 @@ ENUM_REGIME DetectMomentumRegime() {
         return REGIME_WEAK_TREND;
     }
     else {  // <4/8
-        Print("   → RANGING (réduction 50%, min votes 17/21)");
+        Print("   → RANGING (min votes 14/21)");
         return REGIME_RANGING;
     }
 }
 
 //+------------------------------------------------------------------+
 //| Ajuste minimum votes selon régime                                |
+//| FIXED: Seuils réduits pour permettre plus de trades              |
 //+------------------------------------------------------------------+
 int GetAdjustedMinVotes(ENUM_REGIME regime) {
     switch(regime) {
         case REGIME_STRONG_TREND:
-            return 13;  // Moins exigeant (conditions idéales)
+            return 12;  // Moins exigeant (conditions idéales)
 
         case REGIME_WEAK_TREND:
-            return Min_Votes_Total;  // Normal (14/21)
+            return 13;  // Normal (était 14/21)
 
         case REGIME_RANGING:
-            return 17;  // Très sélectif (conditions difficiles)
+            return 14;  // Réduit de 17 à 14 (était trop restrictif)
     }
 
-    return Min_Votes_Total;
+    return 14;
 }
 
 //+------------------------------------------------------------------+

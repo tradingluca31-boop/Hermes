@@ -367,12 +367,19 @@ bool CanOpenNewTrade(ENUM_SESSION session) {
         return false;
     }
 
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║  24/7 MODE: Session check DISABLED for backtesting             ║
+    // ║  Allows trades during Asian and Dead sessions                  ║
+    // ╚════════════════════════════════════════════════════════════════╝
+
+    /* ORIGINAL SESSION CHECK (DISABLED):
     // 2. Session autorisée ?
     double session_mult = GetSessionMultiplier(session);
     if(session_mult == 0.0) {
         // Print("⛔ Session not allowed");
         return false;
     }
+    */
 
     // 3. Daily loss max ?
     if(IsDailyLossMaxReached()) {
