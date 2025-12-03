@@ -50,11 +50,11 @@ bool InitTradesDetailedCSV() {
     // Header
     string header = "trade_id,entry_date,entry_time,direction,entry_price,sl,exit_price,result,r_multiple,duration_hours,";
 
-    // 21 indicateurs
+    // 20 indicateurs (COT removed)
     header += "adx_h4,ema_cross_h4,ema_50_200_h4,price_ema21_h4,supertrend_h4,";  // H4 (5)
     header += "ema_cross_h1,macd_h1,rsi_h1,sar_h1,stoch_h1,bollinger_h1,vol_momentum_h1,donchian_h1,";  // H1 (8)
     header += "vwap_m15,orderflow_m15,volatility_m15,tick_m15,eurusd_m15,spread_m15,";  // M15 (6)
-    header += "cot,atr_percentile,";  // Macro (2)
+    header += "atr_percentile,";  // Macro (1) - COT removed
 
     // Votes
     header += "votes_h4,votes_h1,votes_m15,votes_macro,votes_total";
@@ -133,7 +133,7 @@ void LogTradeExit(double exit_price, double r_multiple) {
     line += DoubleToString(duration_hours, 1);
     line += ",";
 
-    // 21 indicateurs (1/0)
+    // 20 indicateurs (1/0) - COT removed
     for(int i = 0; i < NUM_INDICATORS_TOTAL; i++) {
         line += IntegerToString(g_CurrentPosition.indicators_state[i]);
         line += ",";
@@ -169,8 +169,8 @@ string indicator_names[NUM_INDICATORS_TOTAL] = {
     "ema_cross_h1", "macd_h1", "rsi_h1", "sar_h1", "stoch_h1", "bollinger_h1", "vol_momentum_h1", "donchian_h1",
     // M15 (6)
     "vwap_m15", "orderflow_m15", "volatility_m15", "tick_m15", "eurusd_m15", "spread_m15",
-    // Macro (2)
-    "cot", "atr_percentile"
+    // Macro (1) - COT removed
+    "atr_percentile"
 };
 
 //+------------------------------------------------------------------+
@@ -234,7 +234,7 @@ void RunSHAPAnalysis() {
 
         if(trade_id == 0) continue;  // Ligne vide
 
-        // Parse 21 indicateurs
+        // Parse 20 indicateurs (COT removed)
         int indicators[NUM_INDICATORS_TOTAL];
         for(int i = 0; i < NUM_INDICATORS_TOTAL; i++) {
             indicators[i] = (int)StringToInteger(FileReadString(file_trades));
