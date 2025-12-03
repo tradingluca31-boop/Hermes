@@ -196,7 +196,15 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
 
     // 2. Les 7 multiplicateurs
     double mult_confidence = GetConfidenceMultiplier(total_votes);
-    double mult_session = GetSessionMultiplier(session);
+
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║  BACKTEST MODE: Session multiplier = 1.0 (no reduction)        ║
+    // ╚════════════════════════════════════════════════════════════════╝
+    double mult_session = 1.0;  // Always 1.0 for backtesting
+    if(!MQLInfoInteger(MQL_TESTER)) {
+        mult_session = GetSessionMultiplier(session);  // Use real multiplier in live only
+    }
+
     double mult_regime = GetRegimeMultiplier(regime);
     double mult_sequence = GetSequenceMultiplier();
     double mult_drawdown = GetDrawdownMultiplier();
@@ -238,6 +246,16 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
 
     // 8. Normalize selon broker
     lot_size = NormalizeLotSize(lot_size);
+
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║  SAFETY CAP: Maximum 5 lots to prevent margin errors           ║
+    // ║  Error 4756 occurs when lot size exceeds account margin        ║
+    // ╚════════════════════════════════════════════════════════════════╝
+    double max_safe_lots = 5.0;  // Safe maximum for most accounts
+    if(lot_size > max_safe_lots) {
+        Print("⚠️ Lot size capped from ", DoubleToString(lot_size, 2), " to ", DoubleToString(max_safe_lots, 2));
+        lot_size = max_safe_lots;
+    }
 
     // Logging
     Print("💰 POSITION SIZING:");
