@@ -227,7 +227,7 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
     // 5. Risk amount en dollars
     double risk_amount = account_balance * (risk_pct / 100.0);
 
-    // 6. SL distance en pips
+    // 6. SL distance calculation
     double atr_m15[];
     ArraySetAsSeries(atr_m15, true);
 
@@ -236,13 +236,22 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
         return 0.0;
     }
 
-    double sl_distance_pips = atr_m15[0] * ATR_Multiplier_SL;
+    // ATR returns price movement (e.g., 2.70 for XAUUSD means $2.70 move)
+    double sl_distance_price = atr_m15[0] * ATR_Multiplier_SL;
 
-    // 7. Lot size
-    double point = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_POINT);
-    double point_value = GetPointValue();
+    // 7. Lot size - CORRECT FORMULA using tick value
+    double tick_value = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_VALUE);
+    double tick_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_SIZE);
 
-    double lot_size = risk_amount / (sl_distance_pips * point_value);
+    // Convert SL to ticks and calculate lot size
+    // Formula: lot_size = risk_amount / (SL_in_ticks * tick_value)
+    double sl_in_ticks = sl_distance_price / tick_size;
+    double lot_size = risk_amount / (sl_in_ticks * tick_value);
+
+    Print("   📊 Position calc: Risk=$", DoubleToString(risk_amount, 2),
+          ", SL_price=", DoubleToString(sl_distance_price, 2),
+          ", SL_ticks=", DoubleToString(sl_in_ticks, 0),
+          ", tick_val=$", DoubleToString(tick_value, 2));
 
     // 8. Normalize selon broker
     lot_size = NormalizeLotSize(lot_size);

@@ -333,8 +333,21 @@ int AnalyzeMarket(ENUM_REGIME regime) {
         return -1;  // SELL
     }
     else if(buy_valid && sell_valid) {
-        Print("⚠️ Conflicting signals (both BUY and SELL valid) - skipping");
-        return 0;
+        // Both valid - pick the one with MORE votes
+        if(votes_total_buy > votes_total_sell) {
+            Print("✅ SIGNAL BUY (conflict resolved - BUY has more votes):");
+            Print("   BUY=", votes_total_buy, " vs SELL=", votes_total_sell);
+            return 1;
+        }
+        else if(votes_total_sell > votes_total_buy) {
+            Print("✅ SIGNAL SELL (conflict resolved - SELL has more votes):");
+            Print("   SELL=", votes_total_sell, " vs BUY=", votes_total_buy);
+            return -1;
+        }
+        else {
+            Print("⚠️ Exact tie BUY=SELL=", votes_total_buy, " - skipping");
+            return 0;
+        }
     }
     else {
         // Aucun signal validé
