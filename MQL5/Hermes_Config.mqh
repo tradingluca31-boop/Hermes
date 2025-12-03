@@ -26,8 +26,8 @@
 #define NUM_INDICATORS_H4 5
 #define NUM_INDICATORS_H1 8
 #define NUM_INDICATORS_M15 6
-#define NUM_INDICATORS_MACRO 2
-#define NUM_INDICATORS_TOTAL 21
+#define NUM_INDICATORS_MACRO 1    // COT removed, only ATR Percentile
+#define NUM_INDICATORS_TOTAL 20   // Was 21, now 20 (COT removed)
 
 //+------------------------------------------------------------------+
 //| INPUT PARAMETERS - VALIDATION                                    |
@@ -36,8 +36,8 @@ input group "=== VALIDATION SYSTÈME ==="
 input int Min_Votes_H4 = 3;           // Minimum votes H4 (sur 5) - 60%
 input int Min_Votes_H1 = 5;           // Minimum votes H1 (sur 8) - 63%
 input int Min_Votes_M15 = 4;          // Minimum votes M15 (sur 6) - 67%
-input int Min_Votes_Macro = 1;        // Minimum votes Macro (sur 2) - 50%
-input int Min_Votes_Total = 14;       // Minimum votes Global (sur 21) - 67%
+input int Min_Votes_Macro = 1;        // Minimum votes Macro (sur 1) - ATR only
+input int Min_Votes_Total = 13;       // Minimum votes Global (sur 20) - 65% (COT removed)
 
 //+------------------------------------------------------------------+
 //| INPUT PARAMETERS - RISK MANAGEMENT                               |
@@ -349,10 +349,26 @@ void UpdateDrawdown() {
 }
 
 //+------------------------------------------------------------------+
-//| Point value calculation                                           |
+//| Point value calculation - FIXED for XAUUSD                        |
+//| For Gold: 1 lot = 100 oz, 1 pip ($0.01) = $1 per lot             |
 //+------------------------------------------------------------------+
 double GetPointValue() {
-    return SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_VALUE);
+    // Correct calculation for pip value per lot
+    double tick_value = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_VALUE);
+    double tick_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_SIZE);
+    double point = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_POINT);
+
+    // pip_value = tick_value * (point / tick_size)
+    // This gives the value of 1 point (pip) movement per 1 lot
+    double pip_value = tick_value;
+    if(tick_size > 0) {
+        pip_value = tick_value * (point / tick_size);
+    }
+
+    // Safety: minimum $0.10 per pip per lot to avoid huge lot sizes
+    if(pip_value < 0.10) pip_value = 1.0;  // Default to $1/pip for XAUUSD
+
+    return pip_value;
 }
 
 //+------------------------------------------------------------------+

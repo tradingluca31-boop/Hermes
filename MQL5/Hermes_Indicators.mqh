@@ -738,10 +738,11 @@ int CountVotes_M15(int direction) {
 int CountVotes_Macro(int direction) {
     int votes = 0;
 
-    if(Indicator_COT(direction)) votes++;
+    // COT REMOVED from counting - only ATR Percentile remains
+    // if(Indicator_COT(direction)) votes++;
     if(Indicator_ATR_Percentile(direction)) votes++;
 
-    return votes;
+    return votes;  // Now returns 0 or 1 (only ATR Percentile)
 }
 
 int CountVotes_Total(int direction) {

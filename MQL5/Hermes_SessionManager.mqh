@@ -479,21 +479,21 @@ ENUM_REGIME DetectMomentumRegime() {
 
 //+------------------------------------------------------------------+
 //| Ajuste minimum votes selon régime                                |
-//| FIXED: Seuils réduits pour permettre plus de trades              |
+//| NOW 20 INDICATORS (COT removed)                                  |
 //+------------------------------------------------------------------+
 int GetAdjustedMinVotes(ENUM_REGIME regime) {
     switch(regime) {
         case REGIME_STRONG_TREND:
-            return 12;  // Moins exigeant (conditions idéales)
+            return 11;  // 55% - Moins exigeant (conditions idéales)
 
         case REGIME_WEAK_TREND:
-            return 13;  // Normal (était 14/21)
+            return 12;  // 60% - Normal
 
         case REGIME_RANGING:
-            return 14;  // Réduit de 17 à 14 (était trop restrictif)
+            return 13;  // 65% - Plus exigeant en range
     }
 
-    return 14;
+    return 13;
 }
 
 //+------------------------------------------------------------------+
