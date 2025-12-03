@@ -212,19 +212,35 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
     // ATR returns price movement (e.g., 2.70 for XAUUSD means $2.70 move)
     double sl_distance_price = atr_m15[0] * ATR_Multiplier_SL;
 
-    // 7. Lot size - CORRECT FORMULA using tick value
-    double tick_value = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_VALUE);
-    double tick_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_SIZE);
+    // 7. Lot size - USING OrderCalcProfit (MQL5 OFFICIAL METHOD)
+    // This is the ONLY reliable way to calculate risk for any symbol
+    double current_price = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_ASK);
+    double sl_price = (direction == 1) ? current_price - sl_distance_price : current_price + sl_distance_price;
 
-    // Convert SL to ticks and calculate lot size
-    // Formula: lot_size = risk_amount / (SL_in_ticks * tick_value)
-    double sl_in_ticks = sl_distance_price / tick_size;
-    double lot_size = risk_amount / (sl_in_ticks * tick_value);
+    // Calculate loss for 1 lot at this SL distance
+    double profit_1lot = 0.0;
+    ENUM_ORDER_TYPE order_type = (direction == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
 
-    Print("   📊 Position calc: Risk=$", DoubleToString(risk_amount, 2),
-          ", SL_price=", DoubleToString(sl_distance_price, 2),
-          ", SL_ticks=", DoubleToString(sl_in_ticks, 0),
-          ", tick_val=$", DoubleToString(tick_value, 2));
+    if(!OrderCalcProfit(order_type, SYMBOL_TRADED, 1.0, current_price, sl_price, profit_1lot)) {
+        Print("❌ OrderCalcProfit failed, using fallback calculation");
+        // Fallback: use contract_size method
+        double contract_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_CONTRACT_SIZE);
+        profit_1lot = -sl_distance_price * contract_size;
+    }
+
+    // profit_1lot is negative (loss), so use absolute value
+    double loss_per_lot = MathAbs(profit_1lot);
+
+    // Calculate lot size based on max risk
+    double lot_size = 0.0;
+    if(loss_per_lot > 0) {
+        lot_size = risk_amount / loss_per_lot;
+    }
+
+    Print("   📊 OrderCalcProfit: Risk=$", DoubleToString(risk_amount, 2),
+          ", SL_dist=$", DoubleToString(sl_distance_price, 2),
+          ", Loss/lot=$", DoubleToString(loss_per_lot, 2),
+          ", Lots=", DoubleToString(lot_size, 3));
 
     // 8. Normalize selon broker
     lot_size = NormalizeLotSize(lot_size);
@@ -251,14 +267,13 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
     }
 
     // ╔════════════════════════════════════════════════════════════════╗
-    // ║  STRICT 1% RISK CHECK - Final verification                      ║
-    // ║  This ensures max loss never exceeds 1% of account              ║
+    // ║  STRICT 1% RISK CHECK - Final verification using OrderCalcProfit║
     // ╚════════════════════════════════════════════════════════════════╝
-    double potential_loss = sl_in_ticks * tick_value * lot_size;
+    double potential_loss = loss_per_lot * lot_size;
     double max_allowed_loss = account_balance * 0.01;  // 1% = $100 for $10k account
 
-    if(potential_loss > max_allowed_loss && sl_in_ticks > 0 && tick_value > 0) {
-        double corrected_lots = max_allowed_loss / (sl_in_ticks * tick_value);
+    if(potential_loss > max_allowed_loss && loss_per_lot > 0) {
+        double corrected_lots = max_allowed_loss / loss_per_lot;
         corrected_lots = NormalizeLotSize(corrected_lots);
         Print("⚠️ RISK CHECK: Potential loss $", DoubleToString(potential_loss, 2),
               " > Max $", DoubleToString(max_allowed_loss, 2),
@@ -269,6 +284,10 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
     // Minimum lot size
     double min_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN);
     if(lot_size < min_lot) lot_size = min_lot;
+
+    // Final verification
+    Print("   ✅ FINAL: Lot=", DoubleToString(lot_size, 2),
+          ", Max Loss=$", DoubleToString(loss_per_lot * lot_size, 2));
 
     // Logging
     Print("💰 POSITION SIZING:");
