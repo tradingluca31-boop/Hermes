@@ -482,18 +482,19 @@ ENUM_REGIME DetectMomentumRegime() {
 //| NOW 20 INDICATORS (COT removed)                                  |
 //+------------------------------------------------------------------+
 int GetAdjustedMinVotes(ENUM_REGIME regime) {
+    // TESTING MODE: Very low thresholds to verify EA can trade
     switch(regime) {
         case REGIME_STRONG_TREND:
-            return 11;  // 55% - Moins exigeant (conditions idéales)
+            return 8;   // 40% - TEST MODE
 
         case REGIME_WEAK_TREND:
-            return 12;  // 60% - Normal
+            return 8;   // 40% - TEST MODE
 
         case REGIME_RANGING:
-            return 13;  // 65% - Plus exigeant en range
+            return 8;   // 40% - TEST MODE
     }
 
-    return 13;
+    return 8;
 }
 
 //+------------------------------------------------------------------+
