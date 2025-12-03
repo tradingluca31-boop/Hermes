@@ -134,14 +134,7 @@ double GetDrawdownMultiplier() {
         return 0.0;  // STOP TOTAL
 }
 
-//+------------------------------------------------------------------+
-//| 6. COT MULTIPLIER - DISABLED (COT removed)                       |
-//| Always returns 1.0 (neutral)                                     |
-//+------------------------------------------------------------------+
-double GetCOTMultiplier(int direction) {
-    // COT indicator removed - always return neutral multiplier
-    return 1.0;
-}
+// COT MULTIPLIER REMOVED - was indicator #21, now disabled
 
 //+------------------------------------------------------------------+
 //| 7. SPREAD MULTIPLIER                                             |
@@ -190,17 +183,15 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
     double mult_regime = GetRegimeMultiplier(regime);
     double mult_sequence = GetSequenceMultiplier();
     double mult_drawdown = GetDrawdownMultiplier();
-    double mult_cot = GetCOTMultiplier(direction);
     double mult_spread = GetSpreadMultiplier();
 
-    // 3. Position size %
+    // 3. Position size % (6 multipliers - COT removed)
     double risk_pct = kelly_risk_pct *
                       mult_confidence *
                       mult_session *
                       mult_regime *
                       mult_sequence *
                       mult_drawdown *
-                      mult_cot *
                       mult_spread;
 
     // 4. Caps 0.33% - 1.00%
@@ -276,7 +267,6 @@ double CalculatePositionSize(int direction, int total_votes, ENUM_SESSION sessio
     Print("     - Regime: ×", DoubleToString(mult_regime, 2));
     Print("     - Sequence: ×", DoubleToString(mult_sequence, 2));
     Print("     - Drawdown: ×", DoubleToString(mult_drawdown, 2));
-    Print("     - COT: ×", DoubleToString(mult_cot, 2));
     Print("     - Spread: ×", DoubleToString(mult_spread, 2));
     Print("   Risk Final: ", DoubleToString(risk_pct, 2), "% = $", DoubleToString(risk_amount, 2));
     Print("   SL Distance: ", DoubleToString(sl_distance_price, 2), " ($", DoubleToString(sl_in_ticks, 0), " ticks)");
