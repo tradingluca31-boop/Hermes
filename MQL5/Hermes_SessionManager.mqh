@@ -482,9 +482,9 @@ ENUM_REGIME DetectMomentumRegime() {
 //| NOW 20 INDICATORS (COT removed)                                  |
 //+------------------------------------------------------------------+
 int GetAdjustedMinVotes(ENUM_REGIME regime) {
-    // TESTING MODE: Very low thresholds to verify EA can trade
-    // Lowered to 5/20 (25%) to see more trades
-    return 5;  // Just need 5 votes out of 20 to trade
+    // Seuil augmenté pour trades de meilleure qualité
+    // 10/20 (50%) = consensus requis
+    return 10;  // Need 10 votes out of 20 to trade
 }
 
 //+------------------------------------------------------------------+
