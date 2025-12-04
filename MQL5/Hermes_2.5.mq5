@@ -259,15 +259,26 @@ void OnTick() {
     //===================================================================
     int direction = AnalyzeMarket(regime);
 
-    if(direction == 0) {
-        // DEBUG: Show vote counts when no signal - every 10000 ticks
-        if(tick_count % 10000 == 0) {
-            int buy_votes = CountVotes_H4(1) + CountVotes_H1(1) + CountVotes_M15(1) + CountVotes_Macro(1);
-            int sell_votes = CountVotes_H4(-1) + CountVotes_H1(-1) + CountVotes_M15(-1) + CountVotes_Macro(-1);
-            int min_votes = GetAdjustedMinVotes(regime);
-            Print("📊 Votes: BUY=", buy_votes, "/20, SELL=", sell_votes, "/20, MIN=", min_votes, " (need signal)");
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║  TEST MODE: Force alternating trades every new M15 candle      ║
+    // ╚════════════════════════════════════════════════════════════════╝
+    static datetime last_candle_time = 0;
+    datetime current_candle = iTime(SYMBOL_TRADED, PERIOD_M15, 0);
+
+    if(current_candle != last_candle_time) {
+        last_candle_time = current_candle;
+
+        // If no signal from indicators, force alternating direction
+        if(direction == 0) {
+            static int forced_direction = 1;
+            direction = forced_direction;
+            forced_direction = -forced_direction;  // Alternate next time
+            Print("🔧 TEST MODE: Forcing ", (direction == 1 ? "BUY" : "SELL"), " trade");
         }
-        return;
+    }
+
+    if(direction == 0) {
+        return;  // No signal and not a new candle
     }
 
     //===================================================================
