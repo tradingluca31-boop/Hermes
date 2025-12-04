@@ -195,18 +195,18 @@ void OnDeinit(const int reason) {
 //| Expert tick function                                              |
 //+------------------------------------------------------------------+
 void OnTick() {
-    // ╔════════════════════════════════════════════════════════════════════╗
-    // ║  ULTRA-SIMPLE TEST: Trade on every new H1 candle                   ║
-    // ║  Bypasses ALL conditions to test if execution works                ║
-    // ╚════════════════════════════════════════════════════════════════════╝
+    //===================================================================
+    // STEP 1: CHECK NEW H1 CANDLE (reduce noise)
+    //===================================================================
     static datetime last_h1_candle = 0;
     datetime current_h1 = iTime(SYMBOL_TRADED, PERIOD_H1, 0);
 
-    // Only proceed on new H1 candle
     if(current_h1 == last_h1_candle) return;
     last_h1_candle = current_h1;
 
-    // Check if position already exists
+    //===================================================================
+    // STEP 2: CHECK IF POSITION EXISTS
+    //===================================================================
     bool has_position = false;
     for(int i = 0; i < PositionsTotal(); i++) {
         if(PositionGetTicket(i) > 0) {
@@ -217,126 +217,18 @@ void OnTick() {
         }
     }
 
-    if(has_position) {
-        Print("⏳ Position exists, waiting...");
-        return;
-    }
-
-    // Force alternating trades
-    static int trade_direction = 1;
-    trade_direction = -trade_direction;
-
-    Print("🚀 FORCING TRADE: ", (trade_direction == 1 ? "BUY" : "SELL"), " at ", TimeToString(current_h1));
-
-    // Simple lot size
-    double lot = 0.01;
-
-    // Execute trade
-    MqlTradeRequest request = {};
-    MqlTradeResult result = {};
-
-    request.action = TRADE_ACTION_DEAL;
-    request.symbol = SYMBOL_TRADED;
-    request.volume = lot;
-    request.type = (trade_direction == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
-    request.price = (trade_direction == 1) ? SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_ASK) : SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_BID);
-    request.deviation = 50;
-    request.magic = MAGIC_NUMBER;
-    request.comment = "TEST";
-
-    // Set SL $5 and TP $20 (4:1 RR minimum)
-    double sl_distance = 5.0;   // $5 for XAUUSD
-    double tp_distance = 20.0;  // $20 for XAUUSD (4:1 RR)
-
-    if(trade_direction == 1) {
-        request.sl = request.price - sl_distance;
-        request.tp = request.price + tp_distance;
-    } else {
-        request.sl = request.price + sl_distance;
-        request.tp = request.price - tp_distance;
-    }
-
-    if(OrderSend(request, result)) {
-        Print("✅ Trade opened! Ticket: ", result.order);
-        g_TotalTrades++;
-    } else {
-        Print("❌ Trade failed! Error: ", GetLastError(), " RetCode: ", result.retcode);
-    }
-
-    return;  // Skip all normal logic for this test
-}
-
-/* ========== ORIGINAL OnTick CODE - DISABLED FOR TESTING ==========
-
-void OnTick_DISABLED() {
-    //===================================================================
-    // STEP 2: NOUVELLE BOUGIE M15 ? (DISABLED - Trade immediately)
-    //===================================================================
-    // IsNewCandle check REMOVED - EA now trades on every tick when conditions are met
-    // if(!IsNewCandle()) {
-    //     return;
-    // }
+    if(has_position) return;
 
     //===================================================================
-    // STEP 3: RESET DAILY (MINUIT)
+    // STEP 3: ANALYSE INDICATEURS
     //===================================================================
-    ResetDailyStats();
-
-    //===================================================================
-    // STEP 4: UPDATE DRAWDOWN
-    //===================================================================
-    UpdateDrawdown();
-
-    //===================================================================
-    // STEP 5: DÉTECTION SESSION & RÉGIME
-    //===================================================================
-    ENUM_SESSION session = GetCurrentSession();
     ENUM_REGIME regime = DetectMomentumRegime();
-
-    //===================================================================
-    // STEP 6: CHECKS PRÉLIMINAIRES
-    //===================================================================
-    // 6.1 Protections temporelles
-    if(!CanTradeNow()) {
-        if(debug_tick) Print("DEBUG: CanTradeNow() = FALSE");
-        return;
-    }
-
-    // 6.2 Protections risk
-    if(!CanOpenNewTrade(session)) {
-        if(debug_tick) Print("DEBUG: CanOpenNewTrade() = FALSE");
-        return;
-    }
-
-    //===================================================================
-    // STEP 7: ANALYSE MULTI-TIMEFRAME
-    //===================================================================
     int direction = AnalyzeMarket(regime);
 
-    // ╔════════════════════════════════════════════════════════════════╗
-    // ║  TEST MODE: Force alternating trades every new M15 candle      ║
-    // ╚════════════════════════════════════════════════════════════════╝
-    static datetime last_candle_time = 0;
-    datetime current_candle = iTime(SYMBOL_TRADED, PERIOD_M15, 0);
-
-    if(current_candle != last_candle_time) {
-        last_candle_time = current_candle;
-
-        // If no signal from indicators, force alternating direction
-        if(direction == 0) {
-            static int forced_direction = 1;
-            direction = forced_direction;
-            forced_direction = -forced_direction;  // Alternate next time
-            Print("🔧 TEST MODE: Forcing ", (direction == 1 ? "BUY" : "SELL"), " trade");
-        }
-    }
-
-    if(direction == 0) {
-        return;  // No signal and not a new candle
-    }
+    if(direction == 0) return;  // Pas de signal
 
     //===================================================================
-    // STEP 8: POSITION SIZING
+    // STEP 4: CALCULER VOTES & LOT SIZE
     //===================================================================
     int votes_h4 = CountVotes_H4(direction);
     int votes_h1 = CountVotes_H1(direction);
@@ -344,21 +236,70 @@ void OnTick_DISABLED() {
     int votes_macro = CountVotes_Macro(direction);
     int votes_total = votes_h4 + votes_h1 + votes_m15 + votes_macro;
 
-    double lot_size = CalculatePositionSize(direction, votes_total, session, regime);
-
-    if(lot_size < SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN)) {
-        Print("⚠️ Lot size too small: ", DoubleToString(lot_size, 2), " - skipping trade");
-        return;
-    }
+    // Lot size simple pour backtest (0.01 = risque minimal)
+    double lot_size = 0.01;
 
     //===================================================================
-    // STEP 9: EXÉCUTION TRADE
+    // STEP 5: EXÉCUTER TRADE AVEC TP
     //===================================================================
-    OpenTrade(direction, lot_size, votes_h4, votes_h1, votes_m15, votes_macro, votes_total);
+    OpenTradeWithTP(direction, lot_size, votes_total);
 }
 
-// ========== END OF DISABLED CODE ==========
-*/
+//+------------------------------------------------------------------+
+//| Open Trade avec Take Profit (4:1 RR)                             |
+//+------------------------------------------------------------------+
+void OpenTradeWithTP(int direction, double lot_size, int votes_total) {
+    double entry_price = 0.0;
+    ENUM_ORDER_TYPE order_type;
+
+    if(direction == 1) {
+        entry_price = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_ASK);
+        order_type = ORDER_TYPE_BUY;
+    } else {
+        entry_price = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_BID);
+        order_type = ORDER_TYPE_SELL;
+    }
+
+    // SL et TP fixes pour simplicité
+    double sl_distance = 5.0;   // $5 SL
+    double tp_distance = 20.0;  // $20 TP (4:1 RR)
+
+    double sl_price, tp_price;
+    if(direction == 1) {
+        sl_price = entry_price - sl_distance;
+        tp_price = entry_price + tp_distance;
+    } else {
+        sl_price = entry_price + sl_distance;
+        tp_price = entry_price - tp_distance;
+    }
+
+    MqlTradeRequest request = {};
+    MqlTradeResult result = {};
+
+    request.action = TRADE_ACTION_DEAL;
+    request.symbol = SYMBOL_TRADED;
+    request.volume = lot_size;
+    request.type = order_type;
+    request.price = entry_price;
+    request.sl = sl_price;
+    request.tp = tp_price;
+    request.deviation = 50;
+    request.magic = MAGIC_NUMBER;
+    request.comment = StringFormat("Hermes|%d/20", votes_total);
+
+    if(OrderSend(request, result)) {
+        if(result.retcode == TRADE_RETCODE_DONE) {
+            Print("✅ TRADE: ", (direction == 1 ? "BUY" : "SELL"),
+                  " | Votes: ", votes_total, "/20",
+                  " | Entry: ", DoubleToString(entry_price, 2),
+                  " | SL: ", DoubleToString(sl_price, 2),
+                  " | TP: ", DoubleToString(tp_price, 2));
+            g_TotalTrades++;
+        }
+    } else {
+        Print("❌ Trade failed: ", GetLastError(), " RetCode: ", result.retcode);
+    }
+}
 
 //+------------------------------------------------------------------+
 //| ANALYSE MARCHÉ (Validation multi-timeframe)                      |
