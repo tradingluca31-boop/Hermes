@@ -259,9 +259,11 @@ void OnTick() {
     }
 
     return;  // Skip all normal logic for this test
+}
 
-    /* ORIGINAL CODE BELOW - DISABLED FOR TEST */
+/* ========== ORIGINAL OnTick CODE - DISABLED FOR TESTING ==========
 
+void OnTick_DISABLED() {
     //===================================================================
     // STEP 2: NOUVELLE BOUGIE M15 ? (DISABLED - Trade immediately)
     //===================================================================
@@ -349,6 +351,9 @@ void OnTick() {
     //===================================================================
     OpenTrade(direction, lot_size, votes_h4, votes_h1, votes_m15, votes_macro, votes_total);
 }
+
+// ========== END OF DISABLED CODE ==========
+*/
 
 //+------------------------------------------------------------------+
 //| ANALYSE MARCHÉ (Validation multi-timeframe)                      |
