@@ -274,52 +274,47 @@ void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
     }
 
     //===================================================================
-    // CALCUL LOT SIZE POUR 1% RISK (méthode OrderCalcProfit)
+    // CALCUL LOT SIZE POUR 1% RISK (méthode simplifiée et fiable)
     //===================================================================
     double account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
     double risk_amount = account_balance * 0.01;  // 1% risk = $100 sur $10k
 
-    // Utiliser OrderCalcProfit pour calculer la perte avec 1 lot
-    double loss_1lot = 0.0;
-    ENUM_ORDER_TYPE calc_type = (direction == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+    // Pour XAUUSD: tick_value = valeur de 1 tick (0.01) pour 1 lot
+    double tick_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_SIZE);
+    double tick_value = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_VALUE);
 
-    if(!OrderCalcProfit(calc_type, SYMBOL_TRADED, 1.0, entry_price, sl_price, loss_1lot)) {
-        // Fallback: utiliser contract size
-        double contract_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_CONTRACT_SIZE);
-        loss_1lot = -sl_distance * contract_size;
-        Print("⚠️ OrderCalcProfit failed, using fallback. Contract size: ", contract_size);
-    }
+    // Calculer combien de ticks dans le SL
+    double sl_ticks = sl_distance / tick_size;
 
-    // loss_1lot est négatif, on prend la valeur absolue
-    double loss_per_lot = MathAbs(loss_1lot);
+    // Perte pour 1 lot = nombre de ticks * valeur par tick
+    double loss_per_lot = sl_ticks * tick_value;
 
-    // Calculer le lot size pour risquer exactement risk_amount
-    double lot_size = 0.01;  // Default minimum
-    if(loss_per_lot > 0) {
-        lot_size = risk_amount / loss_per_lot;
-    }
+    // Calculer le lot size
+    double lot_size = risk_amount / loss_per_lot;
 
     // Limites broker
     double min_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN);
     double max_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MAX);
     double lot_step = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_STEP);
 
-    // Arrondir au lot_step (vers le bas pour ne pas dépasser le risque)
+    // Arrondir au lot_step (vers le bas)
     lot_size = MathFloor(lot_size / lot_step) * lot_step;
     lot_size = MathMax(min_lot, MathMin(max_lot, lot_size));
 
-    // Vérification finale: ne pas dépasser 1% risk
-    double actual_risk = loss_per_lot * lot_size;
-    if(actual_risk > risk_amount * 1.1) {  // 10% de marge
-        lot_size = min_lot;  // Réduire au minimum
-        Print("⚠️ Risk too high, reducing to min lot");
+    // HARD CAP: Maximum 0.5 lots pour éviter les pertes catastrophiques
+    if(lot_size > 0.5) {
+        lot_size = 0.5;
     }
 
-    Print("📊 Risk Calc: Balance=", DoubleToString(account_balance, 0),
+    double actual_risk = (sl_ticks * tick_value) * lot_size;
+
+    Print("📊 Risk: Bal=", DoubleToString(account_balance, 0),
           " | 1%=$", DoubleToString(risk_amount, 0),
+          " | TickVal=", DoubleToString(tick_value, 4),
+          " | SL_ticks=", DoubleToString(sl_ticks, 0),
           " | Loss/lot=$", DoubleToString(loss_per_lot, 2),
           " | Lot=", DoubleToString(lot_size, 2),
-          " | Actual Risk=$", DoubleToString(actual_risk, 2));
+          " | Risk=$", DoubleToString(actual_risk, 2));
 
     MqlTradeRequest request = {};
     MqlTradeResult result = {};
