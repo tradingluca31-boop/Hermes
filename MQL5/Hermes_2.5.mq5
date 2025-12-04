@@ -274,20 +274,20 @@ void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
     }
 
     //===================================================================
-    // CALCUL LOT SIZE POUR 1% RISK (méthode simplifiée et fiable)
+    // CALCUL LOT SIZE POUR 1% RISK (HARDCODED pour XAUUSD)
+    //===================================================================
+    // XAUUSD: 1 lot = 100 oz, donc $1 move = $100 P/L
+    // Si SL = $5, alors 1 lot perd $500
+    // Pour perdre 1% du compte sur SL:
+    //   lot = (balance * 0.01) / (sl_distance * 100)
     //===================================================================
     double account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
-    double risk_amount = account_balance * 0.01;  // 1% risk = $100 sur $10k
+    double risk_percent = 0.01;  // 1% risk
+    double risk_amount = account_balance * risk_percent;
 
-    // Pour XAUUSD: tick_value = valeur de 1 tick (0.01) pour 1 lot
-    double tick_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_SIZE);
-    double tick_value = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_TICK_VALUE);
-
-    // Calculer combien de ticks dans le SL
-    double sl_ticks = sl_distance / tick_size;
-
-    // Perte pour 1 lot = nombre de ticks * valeur par tick
-    double loss_per_lot = sl_ticks * tick_value;
+    // XAUUSD: $1 move = $100 per standard lot (100 oz)
+    double dollar_per_point_per_lot = 100.0;  // HARDCODED pour XAUUSD
+    double loss_per_lot = sl_distance * dollar_per_point_per_lot;
 
     // Calculer le lot size
     double lot_size = risk_amount / loss_per_lot;
@@ -301,20 +301,19 @@ void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
     lot_size = MathFloor(lot_size / lot_step) * lot_step;
     lot_size = MathMax(min_lot, MathMin(max_lot, lot_size));
 
-    // HARD CAP: Maximum 0.5 lots pour éviter les pertes catastrophiques
-    if(lot_size > 0.5) {
-        lot_size = 0.5;
+    // HARD CAP pour sécurité
+    if(lot_size > 1.0) {
+        lot_size = 1.0;
     }
 
-    double actual_risk = (sl_ticks * tick_value) * lot_size;
+    double actual_risk = loss_per_lot * lot_size;
 
-    Print("📊 Risk: Bal=", DoubleToString(account_balance, 0),
+    Print("📊 XAUUSD Risk: Bal=$", DoubleToString(account_balance, 0),
           " | 1%=$", DoubleToString(risk_amount, 0),
-          " | TickVal=", DoubleToString(tick_value, 4),
-          " | SL_ticks=", DoubleToString(sl_ticks, 0),
-          " | Loss/lot=$", DoubleToString(loss_per_lot, 2),
+          " | SL=$", DoubleToString(sl_distance, 1),
+          " | Loss/lot=$", DoubleToString(loss_per_lot, 0),
           " | Lot=", DoubleToString(lot_size, 2),
-          " | Risk=$", DoubleToString(actual_risk, 2));
+          " | ActualRisk=$", DoubleToString(actual_risk, 0));
 
     MqlTradeRequest request = {};
     MqlTradeResult result = {};
