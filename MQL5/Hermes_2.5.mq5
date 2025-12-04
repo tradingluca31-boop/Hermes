@@ -274,45 +274,41 @@ void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
     }
 
     //===================================================================
-    // CALCUL LOT SIZE POUR 1% RISK (DYNAMIQUE selon broker)
+    // CALCUL LOT SIZE POUR 1% RISK - LOT FIXE POUR TEST
+    //===================================================================
+    // Les calculs dynamiques ne fonctionnent pas avec ce broker
+    // On force un lot fixe basé sur les résultats observés:
+    // - Avec 0.2 lots, perte = ~$300 au lieu de $100
+    // - Donc pour $100 de perte: lot = 0.2 / 3 = 0.07
     //===================================================================
     double account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
-    double risk_percent = 0.01;  // 1% risk
-    double risk_amount = account_balance * risk_percent;
+    double risk_amount = account_balance * 0.01;  // 1% = $100 sur $10k
 
-    // Récupérer la VRAIE taille du contrat du broker
-    double contract_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_CONTRACT_SIZE);
+    // LOT FIXE: 0.07 lots pour ~$100 de risque sur SL $5
+    double lot_size = 0.07;
 
-    // Perte par lot = SL distance × taille contrat
-    // Ex: SL=$5, contrat=100oz → $5 × 100 = $500/lot
-    double loss_per_lot = sl_distance * contract_size;
-
-    // Calculer le lot size pour risquer exactement risk_amount
-    double lot_size = risk_amount / loss_per_lot;
+    // Ajuster proportionnellement à la balance
+    // Base: $10,000 = 0.07 lots
+    // Si balance = $20,000 → 0.14 lots
+    lot_size = 0.07 * (account_balance / 10000.0);
 
     // Limites broker
     double min_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN);
     double max_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MAX);
     double lot_step = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_STEP);
 
-    // Arrondir au lot_step (vers le bas)
+    // Arrondir au lot_step
     lot_size = MathFloor(lot_size / lot_step) * lot_step;
     lot_size = MathMax(min_lot, MathMin(max_lot, lot_size));
 
-    // HARD CAP pour sécurité
-    if(lot_size > 1.0) {
-        lot_size = 1.0;
+    // HARD CAP
+    if(lot_size > 0.5) {
+        lot_size = 0.5;
     }
 
-    double actual_risk = loss_per_lot * lot_size;
-
-    Print("📊 Risk: Bal=$", DoubleToString(account_balance, 0),
+    Print("📊 FIXED LOT: Bal=$", DoubleToString(account_balance, 0),
           " | 1%=$", DoubleToString(risk_amount, 0),
-          " | ContractSize=", DoubleToString(contract_size, 0),
-          " | SL=$", DoubleToString(sl_distance, 1),
-          " | Loss/lot=$", DoubleToString(loss_per_lot, 0),
-          " | Lot=", DoubleToString(lot_size, 2),
-          " | ActualRisk=$", DoubleToString(actual_risk, 0));
+          " | Lot=", DoubleToString(lot_size, 2));
 
     MqlTradeRequest request = {};
     MqlTradeResult result = {};
