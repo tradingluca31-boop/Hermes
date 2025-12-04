@@ -244,12 +244,17 @@ void OnTick() {
     request.magic = MAGIC_NUMBER;
     request.comment = "TEST";
 
-    // Set SL 50 pips away
+    // Set SL and TP $5 away (1:1 RR for quick closes)
     double sl_distance = 5.0;  // $5 for XAUUSD
-    if(trade_direction == 1)
+    double tp_distance = 5.0;  // $5 for XAUUSD (1:1 ratio)
+
+    if(trade_direction == 1) {
         request.sl = request.price - sl_distance;
-    else
+        request.tp = request.price + tp_distance;
+    } else {
         request.sl = request.price + sl_distance;
+        request.tp = request.price - tp_distance;
+    }
 
     if(OrderSend(request, result)) {
         Print("✅ Trade opened! Ticket: ", result.order);
