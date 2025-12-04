@@ -288,7 +288,7 @@ bool OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
 
     // SL et TP en dollars (prix)
     double sl_distance = 5.0;   // $5 SL
-    double tp_distance = 20.0;  // $20 TP (4:1 RR)
+    double tp_distance = 25.0;  // $25 TP (5:1 RR)
 
     double sl_price, tp_price;
     if(direction == 1) {
@@ -310,14 +310,14 @@ bool OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
     double account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
     double risk_amount = account_balance * 0.01;  // 1% = $100 sur $10k
 
-    // LOT FIXE: 0.14 lots pour ~$100 de risque sur SL $5
-    // (0.07 donnait ~$50, donc on double)
-    double lot_size = 0.14;
+    // LOT FIXE: 0.10 lots pour ~$70 de risque sur SL $5
+    // (réduit pour diminuer le DD)
+    double lot_size = 0.10;
 
     // Ajuster proportionnellement à la balance
-    // Base: $10,000 = 0.14 lots
-    // Si balance = $20,000 → 0.28 lots
-    lot_size = 0.14 * (account_balance / 10000.0);
+    // Base: $10,000 = 0.10 lots
+    // Si balance = $20,000 → 0.20 lots
+    lot_size = 0.10 * (account_balance / 10000.0);
 
     // Limites broker
     double min_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN);
