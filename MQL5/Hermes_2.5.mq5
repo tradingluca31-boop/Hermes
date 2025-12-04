@@ -274,22 +274,20 @@ void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
     }
 
     //===================================================================
-    // CALCUL LOT SIZE POUR 1% RISK (HARDCODED pour XAUUSD)
-    //===================================================================
-    // XAUUSD: 1 lot = 100 oz, donc $1 move = $100 P/L
-    // Si SL = $5, alors 1 lot perd $500
-    // Pour perdre 1% du compte sur SL:
-    //   lot = (balance * 0.01) / (sl_distance * 100)
+    // CALCUL LOT SIZE POUR 1% RISK (DYNAMIQUE selon broker)
     //===================================================================
     double account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
     double risk_percent = 0.01;  // 1% risk
     double risk_amount = account_balance * risk_percent;
 
-    // XAUUSD: $1 move = $100 per standard lot (100 oz)
-    double dollar_per_point_per_lot = 100.0;  // HARDCODED pour XAUUSD
-    double loss_per_lot = sl_distance * dollar_per_point_per_lot;
+    // Récupérer la VRAIE taille du contrat du broker
+    double contract_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_CONTRACT_SIZE);
 
-    // Calculer le lot size
+    // Perte par lot = SL distance × taille contrat
+    // Ex: SL=$5, contrat=100oz → $5 × 100 = $500/lot
+    double loss_per_lot = sl_distance * contract_size;
+
+    // Calculer le lot size pour risquer exactement risk_amount
     double lot_size = risk_amount / loss_per_lot;
 
     // Limites broker
@@ -308,8 +306,9 @@ void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
 
     double actual_risk = loss_per_lot * lot_size;
 
-    Print("📊 XAUUSD Risk: Bal=$", DoubleToString(account_balance, 0),
+    Print("📊 Risk: Bal=$", DoubleToString(account_balance, 0),
           " | 1%=$", DoubleToString(risk_amount, 0),
+          " | ContractSize=", DoubleToString(contract_size, 0),
           " | SL=$", DoubleToString(sl_distance, 1),
           " | Loss/lot=$", DoubleToString(loss_per_lot, 0),
           " | Lot=", DoubleToString(lot_size, 2),
