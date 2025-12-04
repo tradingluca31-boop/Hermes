@@ -260,33 +260,9 @@ void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
         order_type = ORDER_TYPE_SELL;
     }
 
-    // SL et TP en dollars
+    // SL et TP en dollars (prix)
     double sl_distance = 5.0;   // $5 SL
     double tp_distance = 20.0;  // $20 TP (4:1 RR)
-
-    //===================================================================
-    // CALCUL LOT SIZE POUR 1% RISK
-    //===================================================================
-    double account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
-    double risk_amount = account_balance * 0.01;  // 1% risk = $100 sur $10k
-
-    // Pour XAUUSD: 1 lot = 100 oz, donc $1 move = $100 P/L
-    // Si SL = $5, alors 1 lot perd $500
-    // Pour perdre $100 sur SL $5: lot = risk / (sl_distance * 100)
-    double lot_size = risk_amount / (sl_distance * 100.0);
-
-    // Limites broker
-    double min_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN);
-    double max_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MAX);
-    double lot_step = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_STEP);
-
-    // Arrondir au lot_step
-    lot_size = MathFloor(lot_size / lot_step) * lot_step;
-    lot_size = MathMax(min_lot, MathMin(max_lot, lot_size));
-
-    Print("📊 Risk Calc: Balance=", DoubleToString(account_balance, 0),
-          " | 1% Risk=", DoubleToString(risk_amount, 0),
-          " | Lot=", DoubleToString(lot_size, 2));
 
     double sl_price, tp_price;
     if(direction == 1) {
@@ -296,6 +272,54 @@ void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
         sl_price = entry_price + sl_distance;
         tp_price = entry_price - tp_distance;
     }
+
+    //===================================================================
+    // CALCUL LOT SIZE POUR 1% RISK (méthode OrderCalcProfit)
+    //===================================================================
+    double account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
+    double risk_amount = account_balance * 0.01;  // 1% risk = $100 sur $10k
+
+    // Utiliser OrderCalcProfit pour calculer la perte avec 1 lot
+    double loss_1lot = 0.0;
+    ENUM_ORDER_TYPE calc_type = (direction == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+
+    if(!OrderCalcProfit(calc_type, SYMBOL_TRADED, 1.0, entry_price, sl_price, loss_1lot)) {
+        // Fallback: utiliser contract size
+        double contract_size = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_TRADE_CONTRACT_SIZE);
+        loss_1lot = -sl_distance * contract_size;
+        Print("⚠️ OrderCalcProfit failed, using fallback. Contract size: ", contract_size);
+    }
+
+    // loss_1lot est négatif, on prend la valeur absolue
+    double loss_per_lot = MathAbs(loss_1lot);
+
+    // Calculer le lot size pour risquer exactement risk_amount
+    double lot_size = 0.01;  // Default minimum
+    if(loss_per_lot > 0) {
+        lot_size = risk_amount / loss_per_lot;
+    }
+
+    // Limites broker
+    double min_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN);
+    double max_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MAX);
+    double lot_step = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_STEP);
+
+    // Arrondir au lot_step (vers le bas pour ne pas dépasser le risque)
+    lot_size = MathFloor(lot_size / lot_step) * lot_step;
+    lot_size = MathMax(min_lot, MathMin(max_lot, lot_size));
+
+    // Vérification finale: ne pas dépasser 1% risk
+    double actual_risk = loss_per_lot * lot_size;
+    if(actual_risk > risk_amount * 1.1) {  // 10% de marge
+        lot_size = min_lot;  // Réduire au minimum
+        Print("⚠️ Risk too high, reducing to min lot");
+    }
+
+    Print("📊 Risk Calc: Balance=", DoubleToString(account_balance, 0),
+          " | 1%=$", DoubleToString(risk_amount, 0),
+          " | Loss/lot=$", DoubleToString(loss_per_lot, 2),
+          " | Lot=", DoubleToString(lot_size, 2),
+          " | Actual Risk=$", DoubleToString(actual_risk, 2));
 
     MqlTradeRequest request = {};
     MqlTradeResult result = {};
