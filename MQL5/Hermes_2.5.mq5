@@ -205,7 +205,17 @@ void OnTick() {
     last_h1_candle = current_h1;
 
     //===================================================================
-    // STEP 2: CHECK POSITION LIMITS
+    // STEP 2: CHECK TRADING HOURS (éviter 22h-4h)
+    //===================================================================
+    MqlDateTime dt;
+    TimeToStruct(TimeCurrent(), dt);
+    int hour = dt.hour;
+
+    // Pas de trading entre 22h et 4h (nuit)
+    if(hour >= 22 || hour < 4) return;
+
+    //===================================================================
+    // STEP 3: CHECK POSITION LIMITS
     //===================================================================
     // Compter les positions ouvertes sur XAUUSD
     int open_positions = 0;
