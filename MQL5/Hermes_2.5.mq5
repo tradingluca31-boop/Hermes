@@ -244,9 +244,9 @@ void OnTick() {
     request.magic = MAGIC_NUMBER;
     request.comment = "TEST";
 
-    // Set SL and TP $5 away (1:1 RR for quick closes)
-    double sl_distance = 5.0;  // $5 for XAUUSD
-    double tp_distance = 5.0;  // $5 for XAUUSD (1:1 ratio)
+    // Set SL $5 and TP $20 (4:1 RR minimum)
+    double sl_distance = 5.0;   // $5 for XAUUSD
+    double tp_distance = 20.0;  // $20 for XAUUSD (4:1 RR)
 
     if(trade_direction == 1) {
         request.sl = request.price - sl_distance;
