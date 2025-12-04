@@ -211,8 +211,8 @@ void OnTick() {
     TimeToStruct(TimeCurrent(), dt);
     int hour = dt.hour;
 
-    // Pas de trading entre 22h et 7h (nuit)
-    if(hour >= 22 || hour < 7) return;
+    // Pas de trading entre 22h et 10h (nuit + opening volatility)
+    if(hour >= 22 || hour < 10) return;
 
     //===================================================================
     // STEP 3: CHECK POSITION LIMITS
