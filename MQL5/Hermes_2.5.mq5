@@ -246,9 +246,9 @@ void OnTick() {
 }
 
 //+------------------------------------------------------------------+
-//| Open Trade avec Take Profit (4:1 RR)                             |
+//| Open Trade avec Take Profit (4:1 RR) et 1% Risk                  |
 //+------------------------------------------------------------------+
-void OpenTradeWithTP(int direction, double lot_size, int votes_total) {
+void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
     double entry_price = 0.0;
     ENUM_ORDER_TYPE order_type;
 
@@ -260,9 +260,33 @@ void OpenTradeWithTP(int direction, double lot_size, int votes_total) {
         order_type = ORDER_TYPE_SELL;
     }
 
-    // SL et TP fixes pour simplicité
+    // SL et TP en dollars
     double sl_distance = 5.0;   // $5 SL
     double tp_distance = 20.0;  // $20 TP (4:1 RR)
+
+    //===================================================================
+    // CALCUL LOT SIZE POUR 1% RISK
+    //===================================================================
+    double account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
+    double risk_amount = account_balance * 0.01;  // 1% risk = $100 sur $10k
+
+    // Pour XAUUSD: 1 lot = 100 oz, donc $1 move = $100 P/L
+    // Si SL = $5, alors 1 lot perd $500
+    // Pour perdre $100 sur SL $5: lot = risk / (sl_distance * 100)
+    double lot_size = risk_amount / (sl_distance * 100.0);
+
+    // Limites broker
+    double min_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN);
+    double max_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MAX);
+    double lot_step = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_STEP);
+
+    // Arrondir au lot_step
+    lot_size = MathFloor(lot_size / lot_step) * lot_step;
+    lot_size = MathMax(min_lot, MathMin(max_lot, lot_size));
+
+    Print("📊 Risk Calc: Balance=", DoubleToString(account_balance, 0),
+          " | 1% Risk=", DoubleToString(risk_amount, 0),
+          " | Lot=", DoubleToString(lot_size, 2));
 
     double sl_price, tp_price;
     if(direction == 1) {
