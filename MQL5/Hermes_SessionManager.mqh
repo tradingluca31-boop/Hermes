@@ -482,9 +482,9 @@ ENUM_REGIME DetectMomentumRegime() {
 //| NOW 20 INDICATORS (COT removed)                                  |
 //+------------------------------------------------------------------+
 int GetAdjustedMinVotes(ENUM_REGIME regime) {
-    // Seuil augmenté pour trades de meilleure qualité
-    // 10/20 (50%) = consensus requis
-    return 10;  // Need 10 votes out of 20 to trade
+    // Seuil élevé pour trades haute qualité
+    // 15/20 (75%) = fort consensus requis
+    return 15;  // Need 15 votes out of 20 to trade
 }
 
 //+------------------------------------------------------------------+
