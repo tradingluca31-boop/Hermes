@@ -195,25 +195,72 @@ void OnDeinit(const int reason) {
 //| Expert tick function                                              |
 //+------------------------------------------------------------------+
 void OnTick() {
-    // DEBUG: Log every 5000 ticks to see what's blocking
-    static int tick_count = 0;
-    static int last_trade_count = 0;
-    tick_count++;
-    bool debug_tick = (tick_count % 5000 == 0);
+    // ╔════════════════════════════════════════════════════════════════════╗
+    // ║  ULTRA-SIMPLE TEST: Trade on every new H1 candle                   ║
+    // ║  Bypasses ALL conditions to test if execution works                ║
+    // ╚════════════════════════════════════════════════════════════════════╝
+    static datetime last_h1_candle = 0;
+    datetime current_h1 = iTime(SYMBOL_TRADED, PERIOD_H1, 0);
 
-    // Log when no trade for a while
-    if(debug_tick && g_TotalTrades == last_trade_count) {
-        Print("🔍 DEBUG tick #", tick_count, " - Still ", g_TotalTrades, " trades");
-    }
-    last_trade_count = g_TotalTrades;
+    // Only proceed on new H1 candle
+    if(current_h1 == last_h1_candle) return;
+    last_h1_candle = current_h1;
 
-    //===================================================================
-    // STEP 1: GESTION POSITION EXISTANTE
-    //===================================================================
-    if(PositionExists()) {
-        ManageOpenPosition();
-        return;  // Pas de nouvelle position tant qu'une existe
+    // Check if position already exists
+    bool has_position = false;
+    for(int i = 0; i < PositionsTotal(); i++) {
+        if(PositionGetTicket(i) > 0) {
+            if(PositionGetString(POSITION_SYMBOL) == SYMBOL_TRADED) {
+                has_position = true;
+                break;
+            }
+        }
     }
+
+    if(has_position) {
+        Print("⏳ Position exists, waiting...");
+        return;
+    }
+
+    // Force alternating trades
+    static int trade_direction = 1;
+    trade_direction = -trade_direction;
+
+    Print("🚀 FORCING TRADE: ", (trade_direction == 1 ? "BUY" : "SELL"), " at ", TimeToString(current_h1));
+
+    // Simple lot size
+    double lot = 0.01;
+
+    // Execute trade
+    MqlTradeRequest request = {};
+    MqlTradeResult result = {};
+
+    request.action = TRADE_ACTION_DEAL;
+    request.symbol = SYMBOL_TRADED;
+    request.volume = lot;
+    request.type = (trade_direction == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+    request.price = (trade_direction == 1) ? SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_ASK) : SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_BID);
+    request.deviation = 50;
+    request.magic = MAGIC_NUMBER;
+    request.comment = "TEST";
+
+    // Set SL 50 pips away
+    double sl_distance = 5.0;  // $5 for XAUUSD
+    if(trade_direction == 1)
+        request.sl = request.price - sl_distance;
+    else
+        request.sl = request.price + sl_distance;
+
+    if(OrderSend(request, result)) {
+        Print("✅ Trade opened! Ticket: ", result.order);
+        g_TotalTrades++;
+    } else {
+        Print("❌ Trade failed! Error: ", GetLastError(), " RetCode: ", result.retcode);
+    }
+
+    return;  // Skip all normal logic for this test
+
+    /* ORIGINAL CODE BELOW - DISABLED FOR TEST */
 
     //===================================================================
     // STEP 2: NOUVELLE BOUGIE M15 ? (DISABLED - Trade immediately)
