@@ -205,19 +205,33 @@ void OnTick() {
     last_h1_candle = current_h1;
 
     //===================================================================
-    // STEP 2: CHECK IF POSITION EXISTS
+    // STEP 2: CHECK POSITION LIMITS
     //===================================================================
-    bool has_position = false;
+    // Compter les positions ouvertes sur XAUUSD
+    int open_positions = 0;
     for(int i = 0; i < PositionsTotal(); i++) {
         if(PositionGetTicket(i) > 0) {
-            if(PositionGetString(POSITION_SYMBOL) == SYMBOL_TRADED) {
-                has_position = true;
-                break;
+            if(PositionGetString(POSITION_SYMBOL) == SYMBOL_TRADED &&
+               PositionGetInteger(POSITION_MAGIC) == MAGIC_NUMBER) {
+                open_positions++;
             }
         }
     }
 
-    if(has_position) return;
+    // LIMITE 1: Maximum 2 positions simultanées
+    if(open_positions >= 2) return;
+
+    // LIMITE 2: Maximum 3 trades par jour
+    static datetime last_day = 0;
+    static int trades_today = 0;
+
+    datetime current_day = iTime(SYMBOL_TRADED, PERIOD_D1, 0);
+    if(current_day != last_day) {
+        last_day = current_day;
+        trades_today = 0;  // Reset au nouveau jour
+    }
+
+    if(trades_today >= 3) return;
 
     //===================================================================
     // STEP 3: ANALYSE INDICATEURS
@@ -242,13 +256,15 @@ void OnTick() {
     //===================================================================
     // STEP 5: EXÉCUTER TRADE AVEC TP
     //===================================================================
-    OpenTradeWithTP(direction, lot_size, votes_total);
+    if(OpenTradeWithTP(direction, lot_size, votes_total)) {
+        trades_today++;  // Incrémenter le compteur journalier
+    }
 }
 
 //+------------------------------------------------------------------+
 //| Open Trade avec Take Profit (4:1 RR) et 1% Risk                  |
 //+------------------------------------------------------------------+
-void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
+bool OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
     double entry_price = 0.0;
     ENUM_ORDER_TYPE order_type;
 
@@ -333,10 +349,12 @@ void OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
                   " | SL: ", DoubleToString(sl_price, 2),
                   " | TP: ", DoubleToString(tp_price, 2));
             g_TotalTrades++;
+            return true;
         }
     } else {
         Print("❌ Trade failed: ", GetLastError(), " RetCode: ", result.retcode);
     }
+    return false;
 }
 
 //+------------------------------------------------------------------+
