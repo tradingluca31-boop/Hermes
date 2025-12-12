@@ -352,24 +352,12 @@ bool OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
     }
 
     //===================================================================
-    // CALCUL LOT SIZE POUR 1% RISK - LOT FIXE POUR TEST
+    // CALCUL LOT SIZE - RISQUE FIXE $150 PAR TRADE
     //===================================================================
-    // Les calculs dynamiques ne fonctionnent pas avec ce broker
-    // On force un lot fixe basé sur les résultats observés:
-    // - Avec 0.2 lots, perte = ~$300 au lieu de $100
-    // - Donc pour $100 de perte: lot = 0.2 / 3 = 0.07
-    //===================================================================
-    double account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
-    double risk_amount = account_balance * 0.01;  // 1% = $100 sur $10k
+    double risk_amount = 150.0;  // $150 fixe par trade
 
-    // LOT FIXE: 0.10 lots pour ~$70 de risque sur SL $5
-    // (réduit pour diminuer le DD)
-    double lot_size = 0.10;
-
-    // Ajuster proportionnellement à la balance
-    // Base: $10,000 = 0.10 lots
-    // Si balance = $20,000 ? 0.20 lots
-    lot_size = Base_Lot_Per_10K * (account_balance / 10000.0);
+    // Lot = Risk$ / (SL$ x 100) - XAUUSD: 1 lot = $100 par $1
+    double lot_size = risk_amount / (sl_distance * 100.0);
 
     // Limites broker
     double min_lot = SymbolInfoDouble(SYMBOL_TRADED, SYMBOL_VOLUME_MIN);
@@ -385,10 +373,7 @@ bool OpenTradeWithTP(int direction, double lot_size_ignored, int votes_total) {
         lot_size = Max_Lot_Size;
     }
 
-    // LOT DYNAMIQUE (via input Base_Lot_Per_10K)
-
-    Print("?? FIXED LOT: Bal=$", DoubleToString(account_balance, 0),
-          " | 1%=$", DoubleToString(risk_amount, 0),
+    Print("💰 $150 RISK: SL=$", DoubleToString(sl_distance, 2),
           " | Lot=", DoubleToString(lot_size, 2));
 
     MqlTradeRequest request = {};

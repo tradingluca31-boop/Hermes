@@ -63,7 +63,7 @@ input group "=== TRADE EXECUTION ==="
 input double Risk_Reward_Ratio = 3.0;         // Ratio TP/SL (3.0 = 3:1)
 input double Min_ATR_Filter = 7.0;            // ATR minimum $7 pour trader (filtre marchés calmes)
 input double Max_Lot_Size = 0.5;              // Lot size maximum
-input double Base_Lot_Per_10K = 0.10;         // Lot de base pour $10,000
+input double Base_Lot_Per_10K = 0.02;         // Lot de base pour $10,000 (FIXE)
 input int Slippage_Points = 20;               // Slippage max (points)
 input int Max_Positions_Open = 1;             // Positions simultanées max
 input int Max_Trades_Per_Day = 1;             // Trades max par jour
