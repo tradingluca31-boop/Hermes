@@ -244,7 +244,7 @@ void UpdateTrailingStop() {
         request.symbol = SYMBOL_TRADED;
         request.position = g_CurrentPosition.ticket;
         request.sl = new_sl;
-        request.tp = 0;  // Pas de TP
+        request.tp = PositionGetDouble(POSITION_TP);  // Garder le TP original
 
         if(OrderSend(request, result)) {
             if(result.retcode == TRADE_RETCODE_DONE) {
