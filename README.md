@@ -1,13 +1,26 @@
 # Hermes 2.5 - Expert Advisor Institutionnel XAUUSD
 
-EA de trading automatique pour XAUUSD (Gold) optimise pour les comptes FTMO.
+**Version 2.50** | EA de trading automatique pour XAUUSD (Gold) optimise pour les comptes FTMO.
+
+## Architecture
+
+```
+Hermes_2.5.mq5          <- EA Principal
+    |
+    +-- Hermes_Config.mqh        <- Configuration centralisee
+    +-- Hermes_Indicators.mqh    <- 20 indicateurs techniques
+    +-- Hermes_SessionManager.mqh <- Gestion sessions & regime
+    +-- Hermes_RiskManager.mqh   <- Kelly Criterion + 7 multiplicateurs
+    +-- Hermes_TrailingStop.mqh  <- Trailing 7 paliers
+    +-- Hermes_Logger.mqh        <- CSV export + SHAP analysis
+```
 
 ## Caracteristiques
 
 ### Systeme de Votes Multi-Timeframe
-- **21 indicateurs** repartis sur 3 timeframes (H4, H1, M15)
-- Minimum **17/21 votes** (85%) requis pour ouvrir un trade
-- Validation par niveau : H4 (5), H1 (8), M15 (6), Macro (2)
+- **20 indicateurs** repartis sur 3 timeframes (H4, H1, M15) + Macro
+- Minimum **17/20 votes** (85%) requis pour ouvrir un trade
+- Validation par niveau : H4 (3/5), H1 (6/8), M15 (3/6), Macro (0/1)
 
 ### Indicateurs
 
@@ -42,11 +55,12 @@ EA de trading automatique pour XAUUSD (Gold) optimise pour les comptes FTMO.
 | 18 | EURUSD Correlation | - |
 | 19 | Effective Spread | - |
 
-#### Macro (2 indicateurs)
+#### Macro (1 indicateur)
 | # | Indicateur | Description |
 |---|------------|-------------|
-| 20 | COT | Smart Money positioning |
-| 21 | ATR Percentile | Volatilite relative |
+| 20 | ATR Percentile | Volatilite relative (top 60%) |
+
+> **Note:** COT (Commitment of Traders) a ete desactive pour simplifier l'EA.
 
 ### Risk Management
 
@@ -61,15 +75,15 @@ EA de trading automatique pour XAUUSD (Gold) optimise pour les comptes FTMO.
 
 ### Trailing Stop 7 Paliers
 
-| Palier | Declenchement | Nouveau SL |
-|--------|---------------|------------|
-| 1 | +1.0R | Break-even |
-| 2 | +1.5R | +0.5R |
-| 3 | +2.0R | +1.0R |
-| 4 | +2.5R | +1.5R |
-| 5 | +3.0R | +2.0R |
-| 6 | +3.5R | +2.5R |
-| 7 | +4.0R | +3.0R |
+| Palier | Declenchement | Nouveau SL | Gain Securise |
+|--------|---------------|------------|---------------|
+| 1 | +0.5R | Entry -0.3R | Risque -70% |
+| 2 | +1.0R | Entry | BREAKEVEN |
+| 3 | +1.5R | Entry +1.0R | 25% |
+| 4 | +2.0R | Entry +1.5R | 37.5% |
+| 5 | +2.5R | Entry +2.0R | 50% |
+| 6 | +3.0R | Entry +2.5R | 62.5% |
+| 7 | +3.5R+ | Trailing continu | Offset 1.5R |
 
 ### Sessions Trading
 
@@ -117,7 +131,27 @@ EA de trading automatique pour XAUUSD (Gold) optimise pour les comptes FTMO.
 | `Hermes_RiskManager.mqh` | Gestion risque |
 | `Hermes_TrailingStop.mqh` | Trailing stop 7 paliers |
 | `Hermes_Logger.mqh` | Logging et CSV export |
-| `Hermes_OPTI.mq5` | Version experimentale |
+
+## Fonctionnalites Avancees
+
+### Detection de Regime Momentum
+Score /8 base sur 4 metriques:
+- ADX (force trend)
+- ATR Ratio (volatilite)
+- R² Regression (linearite)
+- Efficiency Ratio Kaufman (directionnalite)
+
+| Regime | Score | Action |
+|--------|-------|--------|
+| Strong Trend | >= 6/8 | Boost +20% |
+| Weak Trend | 4-5/8 | Normal |
+| Ranging | < 4/8 | Reduction 50% |
+
+### SHAP Analysis
+Export CSV automatique pour analyse des indicateurs:
+- `hermes_trades_detailed.csv` - Details de chaque trade
+- `hermes_shap_analysis.csv` - Contribution de chaque indicateur
+- `hermes_summary.csv` - Metriques globales
 
 ## Compatibilite
 
